@@ -8,6 +8,7 @@
 #include "misc/lv_types.h"
 #include "widget/widget_base.h"
 #include <memory>
+#include <string>
 #include <set>
 
 namespace LVGLEx {
@@ -21,19 +22,22 @@ protected:
 public:
   friend class WidgetBase;
 
-  WidgetBase* AddWidget(std::unique_ptr<WidgetBase> &&widget);
+  WidgetBase* add_widget(std::unique_ptr<WidgetBase> &&widget);
 
-  lv_obj_t *GetScreenActive() const;
+  lv_obj_t *get_screen_active() const;
   virtual ~WindowBase() = default;
-  virtual void OnShow() {};
-  virtual void OnCreate() {};
-  virtual void OnDelete() {};
-  virtual void OnLoadStart() {};
-  virtual void OnLoadEnd() {};
+  virtual void on_show() {};
+  virtual void on_create() {};
+  virtual void on_delete() {};
+  virtual void on_load_start() {};
+  virtual void on_load_end() {};
+
+  void set_title(const std::string& title) const;
+
 };
 
 class Window : public WindowBase {
-  void registerEvent();
+  void register_event();
 
 protected:
 
@@ -42,7 +46,7 @@ public:
   ~Window() override;
 
 
-  void Show();
+  void show();
 };
 
 }// namespace LVGLEx

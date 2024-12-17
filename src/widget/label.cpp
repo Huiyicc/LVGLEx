@@ -14,24 +14,24 @@ Label::Label() {
 Label::~Label() {
 }
 
-Label *Label::Create(WindowBase *parent) {
+Label *Label::create(WindowBase *parent) {
   auto r = std::make_unique<Label>();
-  auto scr = parent->GetScreenActive();
+  auto scr = parent->get_screen_active();
   r->m_parent = parent;
   r->m_obj = lv_label_create(scr);
 
-  return dynamic_cast<Label *>(parent->AddWidget(std::move(r)));
+  return dynamic_cast<Label *>(parent->add_widget(std::move(r)));
 }
 
-Label *Label::Create(WidgetBase *parent) {
+Label *Label::create(WidgetBase *parent) {
   auto r = std::make_unique<Label>();
-  auto scr = parent->GetParent()->GetScreenActive();
-  r->m_parent = parent->GetParent();
+  auto scr = parent->get_parent()->get_screen_active();
+  r->m_parent = parent->get_parent();
   r->m_obj = lv_label_create(scr);
-  return dynamic_cast<Label *>(parent->AddWidget(std::move(r)));
+  return dynamic_cast<Label *>(parent->add_widget(std::move(r)));
 };
 
-Label *Label::SetText(const std::string &text) {
+Label *Label::set_text(const std::string &text) {
   lv_label_set_text(m_obj, text.c_str());
   return this;
 };

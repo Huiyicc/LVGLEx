@@ -17,10 +17,10 @@ public:
   Label();
   ~Label() override;
 
-  static Label* Create(WidgetBase* parent);
-  static Label* Create(WindowBase* parent);
+  static Label* create(WidgetBase* parent);
+  static Label* create(WindowBase* parent);
 
-  Label* SetText(const std::string& text);
+  Label* set_text(const std::string& text);
 
 };
 

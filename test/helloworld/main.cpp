@@ -9,19 +9,19 @@ class MyWindow : public LVGLEx::Window {
 public:
   ~MyWindow() override = default;
 
-  void OnCreate() override {
+  void on_create() override {
     std::cout << "Window Created" << std::endl;
   };
 
-  void OnDelete() override {
+  void on_delete() override {
 
   };
 
-  void OnLoadStart() override {
+  void on_load_start() override {
     std::cout << "Window Load Start" << std::endl;
   };
 
-  void OnLoadEnd() override {
+  void on_load_end() override {
     std::cout << "Window Load End" << std::endl;
   };
 };
@@ -30,11 +30,11 @@ int main() {
   LVGLEx::Init();
   MyWindow win;
 
-  auto label = LVGLEx::Label::Create(&win);
-  label->SetPos<LVGLEx::Label>(20, 20)
-    ->SetText("Hello World");
+  auto label = LVGLEx::Label::create(&win);
+  label->set_pos(20, 20);
+  label->set_text("Hello World");
 
-  win.Show();
+  win.show();
   LVGLEx::Run();
 
   LVGLEx::DeInit();

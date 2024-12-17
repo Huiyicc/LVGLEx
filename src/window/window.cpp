@@ -12,9 +12,28 @@
 #include <widgets/label/lv_label.h>
 
 #ifdef LV_USE_SDL
+
+#include <SDL2/SDL.h>
 #include <drivers/sdl/lv_sdl_window.h>
 #define WINDOW_CREATE(hor_res, ver_res) lv_sdl_window_create(hor_res, ver_res)
 #define WINDOW_SETTITLE(display, title) lv_sdl_window_set_title(display, title)
+typedef struct {
+  SDL_Window * window;
+  SDL_Renderer * renderer;
+#if LV_USE_DRAW_SDL == 0
+  SDL_Texture * texture;
+  uint8_t * fb1;
+  uint8_t * fb2;
+  uint8_t * fb_act;
+  uint8_t * buf1;
+  uint8_t * buf2;
+  uint8_t * rotated_buf;
+  size_t rotated_buf_size;
+#endif
+  float zoom;
+  uint8_t ignore_size_chg;
+} lv_sdl_window_t;
+
 #else
 #error "unrealized"
 #endif
@@ -25,22 +44,25 @@ namespace LVGLEx {
 
 Window::Window() {
   m_display = WINDOW_CREATE(800, 600);
-  WINDOW_SETTITLE(m_display, "MainWindow");
-
-  registerEvent();
+  WINDOW_SETTITLE(m_display, "");
+  auto dsc = (lv_sdl_window_t *)lv_display_get_driver_data(m_display);
+  SDL_HideWindow(dsc->window);
+  register_event();
 }
 
 Window::~Window() {
   lv_display_delete(m_display);
 }
 
-void Window::registerEvent() {
-  lv_display_add_event_cb(m_display, [](lv_event_t *e) { CAST_WINDOW(e)->OnDelete(); }, LV_EVENT_DELETE, this);
-  lv_display_add_event_cb(m_display, [](lv_event_t *e) { CAST_WINDOW(e)->OnLoadStart(); }, LV_EVENT_SCREEN_LOAD_START, this);
-  lv_display_add_event_cb(m_display, [](lv_event_t *e) { CAST_WINDOW(e)->OnLoadEnd(); }, LV_EVENT_SCREEN_LOADED, this);
+void Window::register_event() {
+  lv_display_add_event_cb(m_display, [](lv_event_t *e) { CAST_WINDOW(e)->on_delete(); }, LV_EVENT_DELETE, this);
+  lv_display_add_event_cb(m_display, [](lv_event_t *e) { CAST_WINDOW(e)->on_load_start(); }, LV_EVENT_SCREEN_LOAD_START, this);
+  lv_display_add_event_cb(m_display, [](lv_event_t *e) { CAST_WINDOW(e)->on_load_end(); }, LV_EVENT_SCREEN_LOADED, this);
 };
 
-void Window::Show() {
+void Window::show() {
+  auto dsc = (lv_sdl_window_t *)lv_display_get_driver_data(m_display);
+  SDL_ShowWindow(dsc->window);
   // lv_obj_t * scr = lv_display_get_screen_active(m_display);
   // lv_obj_t * label = lv_label_create(scr);
   // static lv_style_t style;
