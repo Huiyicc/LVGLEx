@@ -24,6 +24,8 @@ public:
 
   WidgetBase* add_widget(std::unique_ptr<WidgetBase> &&widget);
 
+  lv_display_t* get_display() const;
+
   lv_obj_t *get_screen_active() const;
   virtual ~WindowBase() = default;
   virtual void on_show() {};

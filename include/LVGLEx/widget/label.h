@@ -17,8 +17,7 @@ public:
   Label();
   ~Label() override;
 
-  static Label* create(WidgetBase* parent);
-  static Label* create(WindowBase* parent);
+  WIDGET_OBJ_CREATE_H(Label)
 
   Label* set_text(const std::string& text);
 

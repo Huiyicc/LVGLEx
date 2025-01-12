@@ -18,4 +18,30 @@ extern Spinlock g_LVGLEx_event_locker;
 
 }
 
+#ifdef LV_USE_SDL
+
+struct SDL_Window;
+struct SDL_Renderer;
+struct SDL_Texture;
+
+typedef struct {
+  SDL_Window * window;
+  SDL_Renderer * renderer;
+#if LV_USE_DRAW_SDL == 0
+  SDL_Texture * texture;
+  uint8_t * fb1;
+  uint8_t * fb2;
+  uint8_t * fb_act;
+  uint8_t * buf1;
+  uint8_t * buf2;
+  uint8_t * rotated_buf;
+  size_t rotated_buf_size;
+#endif
+  float zoom;
+  uint8_t ignore_size_chg;
+} lv_sdl_window_t;
+
+#endif
+
+
 #endif //LVGLEX_GLOBAL_DEF_H

@@ -3,7 +3,9 @@
 //
 #include <LVGLEx/LVGLEx.h>
 #include <LVGLEx/widget/label.h>
+#include <LVGLEx/widget_lvgl/group_box.h>
 #include <iostream>
+#include <thread>
 
 class MyWindow : public LVGLEx::Window {
 public:
@@ -33,6 +35,7 @@ int main() {
   auto label = LVGLEx::Label::create(&win);
   label->set_pos(20, 20);
   label->set_text("Hello World");
+
 
   win.show();
   LVGLEx::Run();

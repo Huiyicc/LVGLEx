@@ -8,6 +8,7 @@
 #include <lvgl.h>
 #include <memory>
 #include <set>
+#include "./widget_event_base.h"
 
 namespace LVGLEx {
 
@@ -27,14 +28,41 @@ lv_refr_set_disp_refreshing(lv_display_t* disp) -> void
 lv_display_refr_timer(lv_timer_t* timer) -> void
 void lv_obj_delete_anim_completed_cb(lv_anim_t *a) const;
 * */
-  class WidgetBase {
+
+#define WIDGET_OBJ_CREATE_H(TYPE)          \
+  static TYPE *create(WidgetBase *parent); \
+  static TYPE *create(WindowBase *parent);
+#define WIDGET_OBJ_CREATE_CPP(TYPE, OBJCREATE_FUNC)                 \
+  TYPE *TYPE::create(WindowBase *parent) {                          \
+    auto r = std::make_unique<TYPE>();                              \
+    auto scr = parent->get_screen_active();                         \
+    r->m_parent = parent;                                           \
+    r->m_obj = OBJCREATE_FUNC(scr);                                 \
+    r->init();                                                      \
+    return dynamic_cast<TYPE *>(parent->add_widget(std::move(r)));  \
+  }                                                                 \
+  TYPE *TYPE::create(WidgetBase *parent) {                        \
+    auto r = std::make_unique<TYPE>();                             \
+    auto scr = parent->get_parent()->get_screen_active();           \
+    r->m_parent = parent->get_parent();                             \
+    r->m_obj = OBJCREATE_FUNC(scr);                                \
+    r->init();                                                      \
+    return dynamic_cast<TYPE *>(parent->add_widget(std::move(r))); \
+  };
+
+class WidgetBase : public WidgetEventBase {
 protected:
   lv_obj_t *m_obj = nullptr;
   WindowBase *m_parent = nullptr;
   std::set<std::unique_ptr<WidgetBase>> m_children;
 
+  virtual void init() final;
+
 public:
+  WidgetBase();
   virtual ~WidgetBase();
+
+  lv_obj_t *get_obj() const;
 
   [[nodiscard]] WindowBase *get_parent() const;
 
@@ -242,18 +270,18 @@ public:
   void set_style_grid_cell_row_span(int32_t value, lv_style_selector_t selector) const;
 
 
-  void delete_delayed( uint32_t delay_ms) const;
+  void delete_delayed(uint32_t delay_ms) const;
   void delete_async() const;
-  void set_parent( lv_obj_t* parent) const;
-  void swap( lv_obj_t* obj2) const;
-  void move_to_index( int32_t index) const;
-  void tree_walk( lv_obj_tree_walk_cb_t cb, void* user_data) const;
+  void set_parent(lv_obj_t *parent) const;
+  void swap(lv_obj_t *obj2) const;
+  void move_to_index(int32_t index) const;
+  void tree_walk(lv_obj_tree_walk_cb_t cb, void *user_data) const;
   void dump_tree() const;
 
-  void style_create_transition( lv_part_t part, lv_state_t prev_state, lv_state_t new_state, const lv_obj_style_transition_dsc_t* tr) const;
+  void style_create_transition(lv_part_t part, lv_state_t prev_state, lv_state_t new_state, const lv_obj_style_transition_dsc_t *tr) const;
   void update_layer_type() const;
 
-  void redraw(lv_layer_t* layer) const;
+  void redraw(lv_layer_t *layer) const;
 };
 
 }// namespace LVGLEx

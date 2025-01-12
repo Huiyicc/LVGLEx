@@ -1,0 +1,13 @@
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/CppModules/cmake-scripts
+[submodule "third_party/SDL"]
+	path = third_party/SDL
+	url = https://github.com/libsdl-org/SDL
+	branch = release-2.30.x
+[submodule "third_party/freetype2"]
+	path = third_party/freetype2
+	url = https://github.com/CppModules/freetype2
+[submodule "third_party/lvgl"]
+	path = third_party/lvgl
+	url = https://github.com/CppModules/lvgl
