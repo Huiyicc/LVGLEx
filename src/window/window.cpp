@@ -12,13 +12,19 @@
 #include <lv_conf.h>
 #include <misc/lv_event_private.h>
 #include <widgets/label/lv_label.h>
-
+#include "./window_hook/window_private_def.h"
 #ifdef LV_USE_SDL
 
 #include <SDL2/SDL.h>
-#include <drivers/sdl/lv_sdl_window.h>
 #include <drivers/sdl/lv_sdl_private.h>
-#define WINDOW_CREATE(hor_res, ver_res) lv_sdl_window_create(hor_res, ver_res)
+#include <drivers/sdl/lv_sdl_window.h>
+namespace LVGLEx {
+lv_display_t * create_window(int width, int height);
+}
+#if _HOST_WINDOWS_
+#include <windows.h>
+#endif
+#define WINDOW_CREATE(hor_res, ver_res) create_window(hor_res, ver_res)
 #define WINDOW_SETTITLE(display, title) lv_sdl_window_set_title(display, title)
 
 #else
@@ -34,14 +40,21 @@ Window::Window() {
   WINDOW_SETTITLE(m_display, "");
   auto dsc =
       static_cast<lv_sdl_window_t *>(lv_display_get_driver_data(m_display));
+
   SDL_HideWindow(dsc->window);
   register_event();
+
+  // 注册常量
+  SDL_SetWindowData(dsc->window, WINDOW_DATAMAP_NAME_TITLEBAR_HEIGHT, &this->m_titleBarHeight);
+
   hook_windows(this);
+  SDL_SetWindowData(dsc->window, "LVGLExWindow", this);
 }
 
 Window::~Window() { lv_display_delete(m_display); }
 
 void Window::register_event() {
+
   lv_display_add_event_cb(
       m_display, [](lv_event_t *e) { CAST_WINDOW(e)->on_delete(); },
       LV_EVENT_DELETE, this);
@@ -52,25 +65,14 @@ void Window::register_event() {
       m_display, [](lv_event_t *e) { CAST_WINDOW(e)->on_load_end(); },
       LV_EVENT_SCREEN_LOADED, this);
   lv_display_add_event_cb(
-      m_display,
-      [](lv_event_t *e) {
-
-      },
-      LV_EVENT_CLICKED, this);
-  lv_sdl_window_set_event_callback(handel_sdl_event);
+      m_display, [](lv_event_t *e) {}, LV_EVENT_CLICKED, this);
+  lv_sdl_window_set_event_callback(handel_sdl_window_event);
 };
 
 void Window::show() {
   auto dsc = (lv_sdl_window_t *)lv_display_get_driver_data(m_display);
+
   SDL_ShowWindow(dsc->window);
-  // lv_obj_t * scr = lv_display_get_screen_active(m_display);
-  // lv_obj_t * label = lv_label_create(scr);
-  // static lv_style_t style;
-  // lv_style_init(&style);
-  // lv_style_set_text_font(&style, *g_AppConfig.font);
-  // lv_obj_add_style(label, &style, 0);
-  // lv_label_set_text(label, "Hello, 中文!");
-  // lv_obj_set_pos(label, 10, 10);
 }
 
 } // namespace LVGLEx

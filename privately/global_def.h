@@ -5,6 +5,7 @@
 #ifndef LVGLEX_GLOBAL_DEF_H
 #define LVGLEX_GLOBAL_DEF_H
 #include <atomic>
+#include "LVGLEx/logs.h"
 #include <font/lv_font.h>
 
 // LV_FONT_DECLARE(glyph_bitmap);

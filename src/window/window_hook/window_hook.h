@@ -16,7 +16,9 @@ void hook_windows(Window* window);
 #ifdef LV_USE_SDL
 #include <SDL_events.h>
 namespace LVGLEx {
-void handel_sdl_event(void* event);
+void register_window_id(void* handel, uint32_t id);
+uint32_t get_window_id(void* handel);
+void handel_sdl_window_event(void* event);
 }
 #endif
 

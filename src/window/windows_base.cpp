@@ -28,8 +28,11 @@ WidgetBase *WindowBase::add_widget(std::unique_ptr<WidgetBase> &&widget) {
   return iter->get();
 };
 
+
+
 void WindowBase::set_title(const std::string& title) const {
   WINDOW_SETTITLE(m_display, title.c_str());
 };
+
 
 }// namespace LVGLEx

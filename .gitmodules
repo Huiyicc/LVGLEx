@@ -11,3 +11,6 @@
 [submodule "third_party/lvgl"]
 	path = third_party/lvgl
 	url = https://github.com/CppModules/lvgl
+[submodule "third_party/fmt"]
+	path = third_party/fmt
+	url = https://github.com/CppModules/fmt

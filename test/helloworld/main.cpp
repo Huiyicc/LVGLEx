@@ -11,6 +11,10 @@ class MyWindow : public LVGLEx::Window {
 public:
   ~MyWindow() override = default;
 
+  void on_show() override {
+    std::cout << "Window Show" << std::endl;
+  };
+
   void on_create() override {
     std::cout << "Window Created" << std::endl;
   };

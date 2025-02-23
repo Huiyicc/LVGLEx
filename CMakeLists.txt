@@ -11,6 +11,7 @@ include(cmake/base.cmake)
 include(cmake/SDL.cmake)
 include(cmake/freetype2.cmake)
 include(cmake/lvgl.cmake)
+include(cmake/fmt.cmake)
 
 file(GLOB_RECURSE LVGLEX_RESOURCES
     src/*.cpp
