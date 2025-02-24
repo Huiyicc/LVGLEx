@@ -70,9 +70,10 @@ void Window::register_event() {
 };
 
 void Window::show() {
-  auto dsc = (lv_sdl_window_t *)lv_display_get_driver_data(m_display);
+  // auto dsc = (lv_sdl_window_t *)lv_display_get_driver_data(m_display);
 
-  SDL_ShowWindow(dsc->window);
+  // SDL_ShowWindow(dsc->window);
+  m_show = true;
 }
 
 } // namespace LVGLEx

@@ -15,10 +15,6 @@ namespace LVGLEx {
 
 class WindowBase {
 protected:
-
-  lv_display_t *m_display = nullptr;
-  std::set<std::unique_ptr<WidgetBase>> m_widgets;
-
   struct Status {
     // 鼠标是否为按下
     bool MousePress = false;
@@ -29,14 +25,23 @@ protected:
     // 鼠标最后按下时窗口的坐标
     lv_point_t MousePressPosWindow = {0, 0};
   };
+
+  lv_display_t *m_display = nullptr;
+  std::set<std::unique_ptr<WidgetBase>> m_widgets;
+  // 首次渲染完毕
+  bool m_firstRender = false;
+  // 是否显示
+  bool m_show = false;
   // 窗口状态
   Status m_status;
   // 标题栏高度
   int m_titleBarHeight = 16;
 
+
   void handelEvent(void *eventPtr);
   void handelMouseEvent(void *eventPtr);
   void handelWindowMoveEvent(void *eventPtr);
+  void handelFirstRender(void *eventPtr);
 public:
   friend class WidgetBase;
   friend void handel_sdl_window_event(void *eventPtr);

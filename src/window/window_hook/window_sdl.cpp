@@ -34,11 +34,30 @@ void handel_sdl_window_event(void *eventPtr) {
 }
 
 void WindowBase::handelEvent(void *eventPtr) {
-  auto event = static_cast<SDL_Event *>(eventPtr);
+
+  handelFirstRender(eventPtr);
   // 假定所有的窗口事件都是由handel_sdl_window_event触发
   //
   // handelMouseEvent(event);
 };
+
+void WindowBase::handelFirstRender(void *eventPtr) {
+  auto event = static_cast<SDL_Event *>(eventPtr);
+  if (event->type != SDL_WINDOWEVENT) {
+    return;
+  }
+  auto currSDLWindow = SDL_GetWindowFromID(event->window.windowID);
+  if (event->window.type ==SDL_WINDOWEVENT_EXPOSED) {
+       PrintDebug("WindowBase::handelFirstRender");
+  }
+  // 后渲染,解决窗口第一次显示渲染的问题
+  if (!m_firstRender) {
+    if (m_show) {
+      SDL_ShowWindow(currSDLWindow);
+    }
+    m_firstRender = true;
+  }
+}
 
 void WindowBase::set_data(const char *name, void *data) const {
   auto dsc = static_cast<lv_sdl_window_t *>(
@@ -117,7 +136,7 @@ void WindowBase::handelWindowMoveEvent(void *eventPtr) {
           currSDLWindow,
           m_status.MousePressPosWindow.x + x - m_status.MousePressGlobalPos.x,
           m_status.MousePressPosWindow.y + y - m_status.MousePressGlobalPos.y);
-        }
+    }
   }
     /// -------------------------
   }
@@ -131,10 +150,7 @@ void WindowBase::handelMouseEvent(void *eventPtr) {
     return obj != nullptr;
   };
   auto currSDLWindow = SDL_GetWindowFromID(event->button.windowID);
-  switch (event->type) {
-
-  }
-
+  switch (event->type) {}
 }
 
 } // namespace LVGLEx

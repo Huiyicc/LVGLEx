@@ -148,19 +148,24 @@ lv_display_t *create_window(int width, int height) {
   wc.lpszClassName = L"LVGLEx_WINDOW";
   RegisterClassW(&wc);
 
-  HWND hwnd =
-      CreateWindowExW(WS_EX_APPWINDOW | WS_EX_TOOLWINDOW, // 窗口扩展风格
-                      wc.lpszClassName,                   // 窗口类名
-                      L"",                                // 窗口标题
-                      WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX |
-                          WS_CLIPCHILDREN | WS_POPUP | WS_SIZEBOX, // 窗口风格
-                      0, 0, width, height,                         // 位置和大小
-                      nullptr, nullptr, hInstance, nullptr);
-
-  auto resultWin = lv_sdl_window_create_from(width, height, hwnd);
+  // HWND hwnd =
+  //     CreateWindowExW(WS_EX_APPWINDOW | WS_EX_TOOLWINDOW, // 窗口扩展风格
+  //                     wc.lpszClassName,                   // 窗口类名
+  //                     L"",                                // 窗口标题
+  //                     WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX |
+  //                         WS_CLIPCHILDREN | WS_POPUP | WS_SIZEBOX, // 窗口风格
+  //                     0, 0, width, height,                         // 位置和大小
+  //                     nullptr, nullptr, hInstance, nullptr);
+  // ShowWindow(hwnd, SW_HIDE);
+  // auto resultWin = lv_sdl_window_create_from(width, height, hwnd);
+  auto resultWin = lv_sdl_window_create(width, height);
   auto dsc =
       static_cast<lv_sdl_window_t *>(lv_display_get_driver_data(resultWin));
-  register_window_id(hwnd, SDL_GetWindowID(dsc->window));
+  SDL_SysWMinfo wmInfo;
+  SDL_VERSION(&wmInfo.version);
+  SDL_GetWindowWMInfo(dsc->window, &wmInfo);
+  register_window_id(wmInfo.info.win.window, SDL_GetWindowID(dsc->window));
+  SDL_HideWindow(dsc->window);
 
   return resultWin;
 }
