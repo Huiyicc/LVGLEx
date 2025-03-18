@@ -10,11 +10,11 @@
 #include "../obj_pointer.h"
 #include "./widget_event_base.h"
 #include <LVGLEx/misc/area.h>
+#include <LVGLEx/misc/style.h>
 #include <lvgl.h>
 #include <memory>
 #include <optional>
 #include <set>
-
 
 namespace LVGLEx {
 
@@ -233,10 +233,10 @@ public:
   /**
    * @brief 使用对象的角度和缩放样式属性转换一个点。
    *
-   * @param p 指向要转换的点的指针，转换结果将写回到此处。
    * @param flags 参见 `lv_obj_point_transform_flag_t`
+   * @return 转换后的点。
    */
-  void transformPoint(Point *p, lv_obj_point_transform_flag_t flags) const;
+  Point transformPoint(lv_obj_point_transform_flag_t flags) const;
 
   /**
    * @brief 使用对象的角度和缩放样式属性转换一个点数组。
@@ -247,106 +247,613 @@ public:
    */
   void transformPointArray(std::vector<Point> &points,
                            lv_obj_point_transform_flag_t flags) const;
-  void get_transformed_area(lv_area_t *area,
-                            lv_obj_point_transform_flag_t flags) const;
-  void invalidate_area(const lv_area_t *area) const;
+  /**
+   * @brief 获取转换后的区域。
+   *
+   * @param flags 参见 `lv_obj_point_transform_flag_t`
+   * @return 转换后的区域。
+   */
+  Area getTransformedArea(lv_obj_point_transform_flag_t flags) const;
+
+  /**
+   * @brief 使指定区域无效，需要重绘。
+   *
+   * @param area 指向要使无效的区域。
+   */
+  void invalidateArea(const Area &area) const;
+
+  /**
+   * @brief 使对象无效，需要重绘。
+   */
   void invalidate() const;
-  void set_ext_click_area(int32_t size) const;
-  void get_click_area(lv_area_t *area) const;
 
-  void move_foreground() const;
+  /**
+   * @brief 设置扩展点击区域的大小。
+   *
+   * @param size 扩展点击区域的大小。
+   */
+  void setExtClickArea(int32_t size) const;
 
-  void add_flag(lv_obj_flag_t f) const;
-  void remove_flag(lv_obj_flag_t f) const;
-  void update_flag(lv_obj_flag_t f, bool v) const;
-  void add_state(lv_state_t state) const;
-  void remove_state(lv_state_t state) const;
-  void set_state(lv_state_t state, bool v) const;
-  void set_user_data(void *user_data) const;
-  void allocate_spec_attr() const;
+  /**
+   * @brief 获取点击区域。
+   *
+   * @return 指向用于存储点击的区域。
+   */
+  [[nodiscard]] Area getClickArea() const;
 
-  void class_init_obj() const;
+  /**
+   * @brief 将对象移动到前景。
+   */
+  void moveForeground() const;
 
-  void init_draw_rect_dsc(lv_part_t part, lv_draw_rect_dsc_t *draw_dsc) const;
-  void init_draw_label_dsc(lv_part_t part, lv_draw_label_dsc_t *draw_dsc) const;
-  void init_draw_image_dsc(lv_part_t part, lv_draw_image_dsc_t *draw_dsc) const;
-  void init_draw_line_dsc(lv_part_t part, lv_draw_line_dsc_t *draw_dsc) const;
-  void init_draw_arc_dsc(lv_part_t part, lv_draw_arc_dsc_t *draw_dsc) const;
-  void refresh_ext_draw_size() const;
+  /**
+   * @brief 添加标志。
+   *
+   * @param f 要添加的标志。
+   */
+  void addFlag(lv_obj_flag_t f) const;
 
-  void set_scrollbar_mode(lv_scrollbar_mode_t mode) const;
-  void set_scroll_dir(lv_dir_t dir) const;
-  void set_scroll_snap_x(lv_scroll_snap_t align) const;
-  void set_scroll_snap_y(lv_scroll_snap_t align) const;
-  void get_scroll_end(lv_point_t *end) const;
-  void scroll_by(int32_t dx, int32_t dy, lv_anim_enable_t anim_en) const;
-  void scroll_by_bounded(int32_t dx, int32_t dy,
-                         lv_anim_enable_t anim_en) const;
-  void scroll_to(int32_t x, int32_t y, lv_anim_enable_t anim_en) const;
-  void scroll_to_x(int32_t x, lv_anim_enable_t anim_en) const;
-  void scroll_to_y(int32_t y, lv_anim_enable_t anim_en) const;
-  void scroll_to_view(lv_anim_enable_t anim_en) const;
-  void scroll_to_view_recursive(lv_anim_enable_t anim_en) const;
-  void update_snap(lv_anim_enable_t anim_en) const;
-  void get_scrollbar_area(lv_area_t *hor, lv_area_t *ver) const;
-  void scrollbar_invalidate() const;
-  void readjust_scroll(lv_anim_enable_t anim_en) const;
+  /**
+   * @brief 移除标志。
+   *
+   * @param f 要移除的标志。
+   */
+  void removeFlag(lv_obj_flag_t f) const;
 
-  void add_style(const lv_style_t *style, lv_style_selector_t selector) const;
-  void remove_style(const lv_style_t *style,
+  /**
+   * @brief 更新标志。
+   *
+   * @param f 要更新的标志。
+   * @param v 标志的新值。
+   */
+  void updateFlag(lv_obj_flag_t f, bool v) const;
+
+  /**
+   * @brief 添加状态。
+   *
+   * @param state 要添加的状态。
+   */
+  void addState(lv_state_t state) const;
+
+  /**
+   * @brief 移除状态。
+   *
+   * @param state 要移除的状态。
+   * 例如: `LV_STATE_xx`
+   */
+  void removeState(lv_state_t state) const;
+
+  /**
+   * @brief 设置状态。
+   *
+   * @param state 要设置的状态。
+   * @param v 状态的新值。
+   * 例如: `LV_STATE_xx`
+   */
+  void setState(lv_state_t state, bool v) const;
+
+  /**
+   * @brief 设置用户数据。
+   *
+   * @param user_data 指向用户数据的指针。
+   */
+  void setUserData(void *user_data) const;
+
+  /**
+   * @brief 如果尚未分配，则为对象分配特殊数据。
+   */
+  void allocateSpecAttr() const;
+
+  void classInitObj() const;
+
+  /**
+   * @brief 从对象的样式初始化矩形绘制描述符
+   *
+   * 该函数根据对象当前状态的样式初始化一个矩形绘制描述符。
+   *
+   * @param part 对象的部分，例如
+   * `LV_PART_MAIN`、`LV_PART_SCROLLBAR`、`LV_PART_KNOB` 等
+   * @param draw_dsc 要初始化的描述符。如果某个 `..._opa` 字段被设置为
+   * `LV_OPA_TRANSP`，则相关属性将不会被初始化。 应该使用
+   * `lv_draw_rect_dsc_init(draw_dsc)` 进行初始化。
+   *
+   * @note 仅会设置相关字段。例如，如果 `border width ==
+   * 0`，则其他边框属性将不会被评估。
+   */
+  void initDrawRectDsc(lv_part_t part, lv_draw_rect_dsc_t *draw_dsc) const;
+
+  /**
+   * @brief 初始化绘制标签的描述符。
+   *
+   * @param part 部件类型。
+   * @param draw_dsc 指向绘制标签描述符的指针。
+   */
+  void initDrawLabelDsc(lv_part_t part, lv_draw_label_dsc_t *draw_dsc) const;
+
+  /**
+   * @brief 初始化绘制图像的描述符。
+   *
+   * @param part 部件类型。
+   * @param draw_dsc 指向绘制描述符的指针。
+   */
+  void initDrawImageDsc(lv_part_t part, lv_draw_image_dsc_t *draw_dsc) const;
+
+  /**
+   * @brief 初始化绘制线条的描述符。
+   *
+   * @param part 部件类型。
+   * @param draw_dsc 指向绘制描述符的指针。
+   */
+  void initDrawLineDsc(lv_part_t part, lv_draw_line_dsc_t *draw_dsc) const;
+
+  /**
+   * @brief 初始化绘制弧形的描述符。
+   *
+   * @param part 部件类型。
+   * @param draw_dsc 指向绘制描述符的指针。
+   */
+  void initDrawArcDsc(lv_part_t part, lv_draw_arc_dsc_t *draw_dsc) const;
+
+  /**
+   * @brief 刷新对象的扩展绘制大小
+   *
+   * 发送 'LV_EVENT_REFR_EXT_DRAW_SIZE'
+   * 事件，并调用对象的祖先事件处理程序以刷新扩展绘制大小的值。 结果将保存在
+   * `obj` 中。
+   */
+  void refreshExtDrawSize() const;
+
+  /**
+   * @brief 设置滚动条模式。
+   *
+   * @param mode 滚动条模式。
+   * LV_SCROLL_MODE_ON/OFF/AUTO/ACTIVE
+   */
+  void setScrollbarMode(lv_scrollbar_mode_t mode) const;
+
+  /**
+   * @brief 设置滚动方向。
+   *
+   * @param dir 滚动方向。
+   */
+  void setScrollDir(lv_dir_t dir) const;
+
+  /**
+   * @brief 设置水平滚动对齐方式。
+   *
+   * @param align 水平滚动对齐方式。
+   */
+  void setScrollSnapX(lv_scroll_snap_t align) const;
+
+  /**
+   * @brief 设置垂直滚动对齐方式。
+   *
+   * @param align 垂直滚动对齐方式。
+   */
+  void setScrollSnapY(lv_scroll_snap_t align) const;
+
+  /**
+   * @brief 获取可滚动对象的滚动结束坐标。
+   *
+   * 如果正在进行滚动动画，则返回滚动结束时的 X 和 Y 坐标。
+   * 如果没有滚动动画，则返回当前的 X 或 Y 滚动位置。
+   *
+   * @param end 指向 `lv_point_t` 对象的指针，用于存储结果。
+   */
+  void getScrollEnd(lv_point_t *end) const;
+
+  /**
+   * @brief 按指定的偏移量滚动。
+   *
+   * @param dx 水平滚动的偏移量。
+   * @param dy 垂直滚动的偏移量。
+   * @param anim_en 是否启用动画。
+   */
+  void scrollBy(int32_t dx, int32_t dy, lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 按指定的偏移量在边界内滚动。
+   *
+   * @param dx 水平滚动的偏移量。
+   * @param dy 垂直滚动的偏移量。
+   * @param anim_en 是否启用动画。
+   */
+  void scrollByBounded(int32_t dx, int32_t dy, lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 滚动到指定位置。
+   *
+   * @param x 水平位置。
+   * @param y 垂直位置。
+   * @param anim_en 是否启用动画。
+   */
+  void scrollTo(int32_t x, int32_t y, lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 滚动到指定水平位置。
+   *
+   * @param x 水平位置。
+   * @param anim_en 是否启用动画。
+   */
+  void scrollToX(int32_t x, lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 滚动到指定垂直位置。
+   *
+   * @param y 垂直位置。
+   * @param anim_en 是否启用动画。
+   */
+  void scrollToY(int32_t y, lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 滚动到视图内。
+   *
+   * @param anim_en 是否启用动画。
+   */
+  void scrollToView(lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 递归滚动到视图内。
+   *
+   * @param anim_en 是否启用动画。
+   */
+  void scrollToViewRecursive(lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 更新滚动对齐。
+   *
+   * @param anim_en 是否启用动画。
+   */
+  void updateSnap(lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 获取滚动条区域。
+   *
+   * @param hor 指向存储水平滚动条区域的指针。
+   * @param ver 指向存储垂直滚动条区域的指针。
+   */
+  void getScrollbarArea(Area &hor, Area &ver) const;
+
+  /**
+   * @brief 使滚动条无效。
+   */
+  void scrollbarInvalidate() const;
+
+  /**
+   * @brief 重新调整滚动。
+   *
+   * @param anim_en 是否启用动画。
+   */
+  void readjustScroll(lv_anim_enable_t anim_en) const;
+
+  /**
+   * @brief 添加样式到对象。
+   *
+   * @param style 指向要添加的样式的指针。
+   * @param selector 样式选择器。
+   */
+  void addStyle(const Style &style, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 从对象中移除样式。
+   *
+   * @param style 指向要移除的样式的指针。
+   * @param selector 样式选择器。
+   */
+  void removeStyle(const Style &style, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 移除对象的所有样式。
+   */
+  void removeStyleAll() const;
+
+  /**
+   * @brief 报告样式变化。
+   *
+   * @param style 指向发生变化的样式的指针。
+   */
+  static void reportStyleChange(Style &style);
+
+  /**
+   * @brief 刷新对象的样式。
+   *
+   * @param part 部分选择器。
+   * @param prop 样式属性。
+   */
+  void refreshStyle(lv_part_t part, lv_style_prop_t prop) const;
+
+  /**
+   * @brief 启用样式刷新。
+   */
+  void enableStyleRefresh() const;
+
+  /**
+   * @brief 设置本地样式属性。
+   *
+   * @param prop 样式属性。
+   * @param value 样式值。
+   * @param selector 样式选择器。
+   */
+  void setLocalStyleProp(lv_style_prop_t prop, lv_style_value_t value,
+                         lv_style_selector_t selector) const;
+
+  /**
+   * @brief 使对象淡入。
+   *
+   * @param time 淡入时间（毫秒）。
+   * @param delay 延迟时间（毫秒）。
+   */
+  void fadeIn(uint32_t time, uint32_t delay) const;
+
+  /**
+   * @brief 使对象淡出。
+   *
+   * @param time 淡出时间（毫秒）。
+   * @param delay 延迟时间（毫秒）。
+   */
+  void fadeOut(uint32_t time, uint32_t delay) const;
+
+  /**
+   * @brief 设置对象的所有内边距。
+   *
+   * @param value 内边距值。
+   * @param selector 样式选择器。
+   */
+  void setStylePadAll(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置对象的水平内边距。
+   *
+   * @param value 内边距值。
+   * @param selector 样式选择器。
+   */
+  void setStylePadHor(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置对象的垂直内边距。
+   *
+   * @param value 内边距值。
+   * @param selector 样式选择器。
+   */
+  void setStylePadVer(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置对象的所有外边距。
+   *
+   * @param value 外边距值。
+   * @param selector 样式选择器。
+   */
+  void setStyleMarginAll(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置对象的水平外边距。
+   *
+   * @param value 外边距值。
+   * @param selector 样式选择器。
+   */
+  void setStyleMarginHor(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置对象的垂直外边距。
+   *
+   * @param value 外边距值。
+   * @param selector 样式选择器。
+   */
+  void setStyleMarginVer(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置对象的间距。
+   *
+   * @param value 间距值。
+   * @param selector 样式选择器。
+   */
+  void setStylePadGap(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置对象的宽度和高度。
+   *
+   * @param width 宽度值。
+   * @param height 高度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleSize(int32_t width, int32_t height,
                     lv_style_selector_t selector) const;
-  void remove_style_all() const;
-  void report_style_change(lv_style_t *style) const;
-  void refresh_style(lv_part_t part, lv_style_prop_t prop) const;
-  void enable_style_refresh() const;
-  void set_local_style_prop(lv_style_prop_t prop, lv_style_value_t value,
-                            lv_style_selector_t selector) const;
-  void fade_in(uint32_t time, uint32_t delay) const;
-  void fade_out(uint32_t time, uint32_t delay) const;
-  void set_style_pad_all(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_hor(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_ver(int32_t value, lv_style_selector_t selector) const;
-  void set_style_margin_all(int32_t value, lv_style_selector_t selector) const;
-  void set_style_margin_hor(int32_t value, lv_style_selector_t selector) const;
-  void set_style_margin_ver(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_gap(int32_t value, lv_style_selector_t selector) const;
-  void set_style_size(int32_t width, int32_t height,
-                      lv_style_selector_t selector) const;
-  void set_style_transform_scale(int32_t value,
+
+  /**
+   * @brief 设置对象的缩放比例。
+   *
+   * @param value 缩放值。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformScale(int32_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的宽度。
+   *
+   * @param value 要设置的宽度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的最小宽度。
+   *
+   * @param value 要设置的最小宽度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleMinWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的最大宽度。
+   *
+   * @param value 要设置的最大宽度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleMaxWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的高度。
+   *
+   * @param value 要设置的高度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleHeight(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的最小高度。
+   *
+   * @param value 要设置的最小高度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleMinHeight(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的最大高度。
+   *
+   * @param value 要设置的最大高度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleMaxHeight(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的长度。
+   *
+   * @param value 要设置的长度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleLength(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的X坐标。
+   *
+   * @param value 要设置的X坐标值。
+   * @param selector 样式选择器。
+   */
+  void setStyleX(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的Y坐标。
+   *
+   * @param value 要设置的Y坐标值。
+   * @param selector 样式选择器。
+   */
+  void setStyleY(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的对齐方式。
+   *
+   * @param value 要设置的对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleAlign(lv_align_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的转换宽度。
+   *
+   * @param value 要设置的转换宽度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformWidth(int32_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的转换高度。
+   *
+   * @param value 要设置的转换高度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformHeight(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的X轴平移量。
+   *
+   * @param value 要设置的X轴平移量。
+   * @param selector 样式选择器。
+   */
+  void setStyleTranslateX(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的Y轴平移量。
+   *
+   * @param value 要设置的Y轴平移量。
+   * @param selector 样式选择器。
+   */
+  void setStyleTranslateY(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的径向平移量。
+   *
+   * @param value 要设置的径向平移量。
+   * @param selector 样式选择器。
+   */
+  void setStyleTranslateRadial(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的X轴缩放比例。
+   *
+   * @param value 要设置的X轴缩放比例。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformScaleX(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的Y轴缩放比例。
+   *
+   * @param value 要设置的Y轴缩放比例。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformScaleY(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的旋转角度。
+   *
+   * @param value 要设置的旋转角度。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformRotation(int32_t value,
                                  lv_style_selector_t selector) const;
 
-  void set_style_width(int32_t value, lv_style_selector_t selector) const;
-  void set_style_min_width(int32_t value, lv_style_selector_t selector) const;
-  void set_style_max_width(int32_t value, lv_style_selector_t selector) const;
-  void set_style_height(int32_t value, lv_style_selector_t selector) const;
-  void set_style_min_height(int32_t value, lv_style_selector_t selector) const;
-  void set_style_max_height(int32_t value, lv_style_selector_t selector) const;
-  void set_style_length(int32_t value, lv_style_selector_t selector) const;
-  void set_style_x(int32_t value, lv_style_selector_t selector) const;
-  void set_style_y(int32_t value, lv_style_selector_t selector) const;
-  void set_style_align(lv_align_t value, lv_style_selector_t selector) const;
-  void set_style_transform_width(int32_t value,
-                                 lv_style_selector_t selector) const;
-  void set_style_transform_height(int32_t value,
-                                  lv_style_selector_t selector) const;
-  void set_style_translate_x(int32_t value, lv_style_selector_t selector) const;
-  void set_style_translate_y(int32_t value, lv_style_selector_t selector) const;
-  void set_style_translate_radial(int32_t value,
-                                  lv_style_selector_t selector) const;
-  void set_style_transform_scale_x(int32_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_transform_scale_y(int32_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_transform_rotation(int32_t value,
-                                    lv_style_selector_t selector) const;
-  void set_style_transform_pivot_x(int32_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_transform_pivot_y(int32_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_transform_skew_x(int32_t value,
-                                  lv_style_selector_t selector) const;
-  void set_style_transform_skew_y(int32_t value,
-                                  lv_style_selector_t selector) const;
+  /**
+   * @brief 设置样式的旋转轴的X坐标。
+   *
+   * @param value 要设置的旋转轴的X坐标值。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformPivotX(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的旋转轴的Y坐标。
+   *
+   * @param value 要设置的旋转轴的Y坐标值。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformPivotY(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的X轴倾斜角度。
+   *
+   * @param value 要设置的X轴倾斜角度。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformSkewX(int32_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的Y轴倾斜角度。
+   *
+   * @param value 要设置的Y轴倾斜角度。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransformSkewY(int32_t value,
+                              lv_style_selector_t selector) const;
+
   void set_style_pad_top(int32_t value, lv_style_selector_t selector) const;
   void set_style_pad_bottom(int32_t value, lv_style_selector_t selector) const;
   void set_style_pad_left(int32_t value, lv_style_selector_t selector) const;
