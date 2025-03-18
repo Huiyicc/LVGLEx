@@ -17,9 +17,9 @@ struct AppConfig {
 };
 extern AppConfig g_AppConfig;
 
-void Init();
-void DeInit();
-void Run();
+void init();
+void deInit();
+void runExec();
 
 }// namespace LVGLEx
 

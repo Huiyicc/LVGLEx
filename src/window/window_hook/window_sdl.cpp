@@ -54,14 +54,14 @@ void WindowBase::handelFirstRender(void *eventPtr) {
   if (!m_firstRender) {
     if (m_show) {
       SDL_ShowWindow(currSDLWindow);
+      m_firstRender = true;
     }
-    m_firstRender = true;
   }
 }
 
-void WindowBase::set_data(const char *name, void *data) const {
+void WindowBase::setData(const char *name, void *data) const {
   auto dsc = static_cast<lv_sdl_window_t *>(
-      lv_display_get_driver_data(this->get_display()));
+      lv_display_get_driver_data(this->getDisplay().get()));
   SDL_SetWindowData(dsc->window, name, data);
 };
 

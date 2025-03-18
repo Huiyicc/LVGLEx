@@ -9,7 +9,7 @@
 
 namespace LVGLEx {
 
-void Run() {
+void runExec() {
   // 检查是否有多余的窗口
   auto check_display_num = []() {
     return lv_disp_get_next(nullptr) != nullptr;

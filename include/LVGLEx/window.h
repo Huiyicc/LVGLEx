@@ -37,31 +37,29 @@ protected:
   // 标题栏高度
   int m_titleBarHeight = 16;
 
-
   void handelEvent(void *eventPtr);
   void handelMouseEvent(void *eventPtr);
   void handelWindowMoveEvent(void *eventPtr);
   void handelFirstRender(void *eventPtr);
+
 public:
   friend class WidgetBase;
   friend void handel_sdl_window_event(void *eventPtr);
 
-  WidgetBase *add_widget(std::unique_ptr<WidgetBase> &&widget);
+  [[nodiscard]] DisplayPointer getDisplay() const;
 
-  lv_display_t *get_display() const;
-
-  lv_obj_t *get_screen_active() const;
+  [[nodiscard]] WidgetPointer getScreenActive() const;
   virtual ~WindowBase() = default;
 
-  void set_data(const char*name, void*data) const;
+  void setData(const char *name, void *data) const;
 
-  virtual void on_show() {};
-  virtual void on_create() {};
-  virtual void on_delete() {};
-  virtual void on_load_start() {};
-  virtual void on_load_end() {};
+  virtual void onShow() {};
+  virtual void onCreate() {};
+  virtual void onDelete() {};
+  virtual void onLoadStart() {};
+  virtual void onLoadEnd() {};
 
-  void set_title(const std::string &title) const;
+  void setTitle(const std::string &title) const;
   // void set_point(lv_point_t point);
 };
 
@@ -72,6 +70,13 @@ protected:
 public:
   Window();
   ~Window() override;
+
+  /**
+   * @brief 从显示器获取窗口指针
+   * @param display 显示器指针
+   * @return 窗口指针
+   * */
+  static Window *getByDisplay(lv_display_t *display);
 
   void show();
 };

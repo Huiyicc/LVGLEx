@@ -2,6 +2,7 @@
 // Created by 19254 on 24-12-15.
 //
 #include <LVGLEx/LVGLEx.h>
+#include <LVGLEx/logs.h>
 #include <LVGLEx/widget/label.h>
 #include <LVGLEx/widget_lvgl/group_box.h>
 #include <iostream>
@@ -11,40 +12,40 @@ class MyWindow : public LVGLEx::Window {
 public:
   ~MyWindow() override = default;
 
-  void on_show() override {
+  void onShow() override {
     std::cout << "Window Show" << std::endl;
   };
 
-  void on_create() override {
+  void onCreate() override {
     std::cout << "Window Created" << std::endl;
   };
 
-  void on_delete() override {
+  void onDelete() override {
 
   };
 
-  void on_load_start() override {
+  void onLoadStart() override {
     std::cout << "Window Load Start" << std::endl;
   };
 
-  void on_load_end() override {
+  void onLoadEnd() override {
     std::cout << "Window Load End" << std::endl;
   };
 };
 
 int main() {
-  LVGLEx::Init();
+  LVGLEx::init();
   MyWindow win;
+  win.setTitle("Hello World1");
 
   auto label = LVGLEx::Label::create(&win);
-  label->set_pos(20, 20);
-  label->set_text("Hello World");
-
+  label.setPos(20, 20);
+  label.setText("Hello World");
 
   win.show();
-  LVGLEx::Run();
 
-  LVGLEx::DeInit();
+  LVGLEx::runExec();
+  LVGLEx::deInit();
 
   return 0;
 }

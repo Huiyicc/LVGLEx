@@ -172,7 +172,7 @@ lv_display_t *create_window(int width, int height) {
 
 void hook_windows(Window *window) {
   auto dsc = static_cast<lv_sdl_window_t *>(
-      lv_display_get_driver_data(window->get_display()));
+      lv_display_get_driver_data(window->getDisplay().get()));
 
   SDL_SysWMinfo wmInfo;
   SDL_VERSION(&wmInfo.version);

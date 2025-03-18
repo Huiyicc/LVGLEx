@@ -1,22 +1,24 @@
 //
 // Created by 19254 on 24-12-16.
 //
+#include <LVGLEx/misc/point.h>
 #include <LVGLEx/widget/widget_base.h>
+#include <LVGLEx/window.h>
 #include <core/lv_obj_pos.h>
 #include <core/lv_obj_style_private.h>
 #include <core/lv_obj_tree.h>
 #include <iostream>
 #include <misc/lv_event_private.h>
+#include <optional>
 
 namespace LVGLEx {
-
 WidgetBase::WidgetBase() {
 
 };
 
 WidgetBase::~WidgetBase() {
   if (m_obj.get()) {
-    m_obj = nullptr;
+    m_obj.clean();
   }
 }
 void WidgetBase::init() {
@@ -25,35 +27,151 @@ void WidgetBase::init() {
   }
 }
 
-lv_obj_t *WidgetBase::get_obj() const { return m_obj.get(); };
-WidgetBase *WidgetBase::add_widget(std::unique_ptr<WidgetBase> &&widget) {
-  auto [iter, _] = m_children.insert(std::move(widget));
-  return iter->get();
+lv_obj_t *WidgetBase::getObj() const { return m_obj.get(); };
+
+WidgetPointer WidgetBase::release() { return m_obj.release(); };
+
+WidgetBase WidgetBase::makeFromPtr(lv_obj_t *ptr) {
+  auto w = WidgetBase();
+  w.m_obj = WidgetPointer::makeQuote(ptr);
+  return w;
 }
 
-WindowBase *WidgetBase::get_parent() const { return m_parent; }
+std::optional<WidgetBase> WidgetBase::getParent() const {
+  return makeFromPtr(lv_obj_get_parent(m_obj.get()));
+}
 
-void WidgetBase::set_pos(const int32_t x, const int32_t y) const {
+WindowBase *WidgetBase::getWindow() const {
+  return Window::getByDisplay(lv_obj_get_display(m_obj.get()));
+}
+
+WidgetPointer WidgetBase::getScreenActive() const {
+  return WidgetPointer::makeQuote(lv_obj_get_screen(m_obj.get()));
+}
+
+void WidgetBase::setPos(const int32_t x, const int32_t y) const {
   lv_obj_set_pos(m_obj.get(), x, y);
 }
 
-void WidgetBase::set_x(const int32_t x) const { lv_obj_set_x(m_obj.get(), x); }
+void WidgetBase::setX(const int32_t x) const { lv_obj_set_x(m_obj.get(), x); }
 
-void WidgetBase::set_y(const int32_t y) const { lv_obj_set_y(m_obj.get(), y); }
+void WidgetBase::setY(const int32_t y) const { lv_obj_set_y(m_obj.get(), y); }
 
-void WidgetBase::set_size(const int32_t w, const int32_t h) const {
+void WidgetBase::setSize(const int32_t w, const int32_t h) const {
   lv_obj_set_size(m_obj.get(), w, h);
 }
 
-void WidgetBase::set_width(const int32_t w) const {
+void WidgetBase::setWidth(const int32_t w) const {
   lv_obj_set_width(m_obj.get(), w);
 }
 
-void WidgetBase::set_height(const int32_t h) const {
+void WidgetBase::setHeight(const int32_t h) const {
   lv_obj_set_height(m_obj.get(), h);
 }
 
-void WidgetBase::move_foreground() const { lv_obj_move_foreground(m_obj.get()); };
+void WidgetBase::setContentWidth(int32_t w) const {
+  lv_obj_set_content_width(m_obj.get(), w);
+}
+
+void WidgetBase::setContentHeight(int32_t h) const {
+  lv_obj_set_content_height(m_obj.get(), h);
+}
+
+void WidgetBase::setLayout(uint32_t layout) const {
+  lv_obj_set_layout(m_obj.get(), layout);
+}
+
+void WidgetBase::markLayoutAsDirty() const {
+  lv_obj_mark_layout_as_dirty(m_obj.get());
+}
+
+void WidgetBase::updateLayout() const { lv_obj_update_layout(m_obj.get()); }
+
+void WidgetBase::setAlign(lv_align_t align) const {
+  lv_obj_set_align(m_obj.get(), align);
+}
+
+void WidgetBase::align(lv_align_t align, int32_t x_ofs, int32_t y_ofs) const {
+  lv_obj_align(m_obj.get(), align, x_ofs, y_ofs);
+}
+
+void WidgetBase::alignTo(const WidgetPointer &base, lv_align_t align,
+                         int32_t x_ofs, int32_t y_ofs) const {
+  lv_obj_align_to(m_obj.get(), base.get(), align, x_ofs, y_ofs);
+}
+
+void WidgetBase::center() const { lv_obj_center(m_obj.get()); }
+
+void WidgetBase::setTransform(const Matrix &matrix) const {
+  lv_obj_set_transform(m_obj.get(), matrix.get());
+}
+
+void WidgetBase::resetTransform() const { lv_obj_reset_transform(m_obj.get()); }
+
+Area WidgetBase::getCoords() const {
+  Area res;
+  lv_obj_get_coords(m_obj.get(), res.getPtr());
+  return res;
+}
+
+Area WidgetBase::getContentCoords() const {
+  Area res;
+  lv_obj_get_content_coords(m_obj.get(), res.getPtr());
+  return res;
+}
+
+void WidgetBase::refrPos() const { lv_obj_refr_pos(m_obj.get()); }
+
+void WidgetBase::moveTo(int32_t x, int32_t y) const {
+  lv_obj_move_to(m_obj.get(), x, y);
+}
+
+void WidgetBase::moveChildrenBy(int32_t x_diff, int32_t y_diff,
+                                  bool ignore_floating) const {
+  lv_obj_move_children_by(m_obj.get(), x_diff, y_diff, ignore_floating);
+}
+
+void WidgetBase::transformPoint(Point* p,
+                                 lv_obj_point_transform_flag_t flags) const {
+  lv_obj_transform_point(m_obj.get(), p->getPtr(), flags);
+}
+
+void WidgetBase::transformPointArray(
+    std::vector<Point>& points,
+    lv_obj_point_transform_flag_t flags) const {
+    int32_t count = points.size();
+  std::vector<lv_point_t> points_c(count);
+  for (int i = 0; i < count; i++) {
+    points_c[i] = *points[i].get();
+  }
+  lv_obj_transform_point_array(m_obj.get(), points_c.data(), count, flags);
+  for (int i = 0; i < count; i++) {
+    points[i] = points_c[i];
+  }
+}
+
+void WidgetBase::get_transformed_area(
+    lv_area_t *area, lv_obj_point_transform_flag_t flags) const {
+  lv_obj_get_transformed_area(m_obj.get(), area, flags);
+}
+
+void WidgetBase::invalidate_area(const lv_area_t *area) const {
+  lv_obj_invalidate_area(m_obj.get(), area);
+}
+
+void WidgetBase::invalidate() const { lv_obj_invalidate(m_obj.get()); }
+
+void WidgetBase::set_ext_click_area(int32_t size) const {
+  lv_obj_set_ext_click_area(m_obj.get(), size);
+}
+
+void WidgetBase::get_click_area(lv_area_t *area) const {
+  lv_obj_get_click_area(m_obj.get(), area);
+}
+
+void WidgetBase::move_foreground() const {
+  lv_obj_move_foreground(m_obj.get());
+};
 
 void WidgetBase::add_flag(const lv_obj_flag_t f) const {
   lv_obj_add_flag(m_obj.get(), f);
@@ -125,94 +243,6 @@ void WidgetBase::refresh_ext_draw_size() const {
 // void WidgetBase::func_name_end( lv_cover_res_t res) const {
 //   func_prefixfunc_name_end(m_obj , res);
 // }
-
-void WidgetBase::set_content_width(int32_t w) const {
-  lv_obj_set_content_width(m_obj.get(), w);
-}
-
-void WidgetBase::set_content_height(int32_t h) const {
-  lv_obj_set_content_height(m_obj.get(), h);
-}
-
-void WidgetBase::set_layout(uint32_t layout) const {
-  lv_obj_set_layout(m_obj.get(), layout);
-}
-
-void WidgetBase::mark_layout_as_dirty() const {
-  lv_obj_mark_layout_as_dirty(m_obj.get());
-}
-
-void WidgetBase::update_layout() const { lv_obj_update_layout(m_obj.get()); }
-
-void WidgetBase::set_align(lv_align_t align) const {
-  lv_obj_set_align(m_obj.get(), align);
-}
-
-void WidgetBase::align(lv_align_t align, int32_t x_ofs, int32_t y_ofs) const {
-  lv_obj_align(m_obj.get(), align, x_ofs, y_ofs);
-}
-
-void WidgetBase::align_to(const lv_obj_t *base, lv_align_t align, int32_t x_ofs,
-                          int32_t y_ofs) const {
-  lv_obj_align_to(m_obj.get(), base, align, x_ofs, y_ofs);
-}
-
-void WidgetBase::center() const { lv_obj_center(m_obj.get()); }
-
-void WidgetBase::set_transform(const lv_matrix_t *matrix) const {
-  lv_obj_set_transform(m_obj.get(), matrix);
-}
-
-void WidgetBase::reset_transform() const { lv_obj_reset_transform(m_obj.get()); }
-
-void WidgetBase::get_coords(lv_area_t *coords) const {
-  lv_obj_get_coords(m_obj.get(), coords);
-}
-
-void WidgetBase::get_content_coords(lv_area_t *area) const {
-  lv_obj_get_content_coords(m_obj.get(), area);
-}
-
-void WidgetBase::refr_pos() const { lv_obj_refr_pos(m_obj.get()); }
-
-void WidgetBase::move_to(int32_t x, int32_t y) const {
-  lv_obj_move_to(m_obj.get(), x, y);
-}
-
-void WidgetBase::move_children_by(int32_t x_diff, int32_t y_diff,
-                                  bool ignore_floating) const {
-  lv_obj_move_children_by(m_obj.get(), x_diff, y_diff, ignore_floating);
-}
-
-void WidgetBase::transform_point(lv_point_t *p,
-                                 lv_obj_point_transform_flag_t flags) const {
-  lv_obj_transform_point(m_obj.get(), p, flags);
-}
-
-void WidgetBase::transform_point_array(
-    lv_point_t points[], size_t count,
-    lv_obj_point_transform_flag_t flags) const {
-  lv_obj_transform_point_array(m_obj.get(), points, count, flags);
-}
-
-void WidgetBase::get_transformed_area(
-    lv_area_t *area, lv_obj_point_transform_flag_t flags) const {
-  lv_obj_get_transformed_area(m_obj.get(), area, flags);
-}
-
-void WidgetBase::invalidate_area(const lv_area_t *area) const {
-  lv_obj_invalidate_area(m_obj.get(), area);
-}
-
-void WidgetBase::invalidate() const { lv_obj_invalidate(m_obj.get()); }
-
-void WidgetBase::set_ext_click_area(int32_t size) const {
-  lv_obj_set_ext_click_area(m_obj.get(), size);
-}
-
-void WidgetBase::get_click_area(lv_area_t *area) const {
-  lv_obj_get_click_area(m_obj.get(), area);
-}
 
 void WidgetBase::set_scrollbar_mode(lv_scrollbar_mode_t mode) const {
   lv_obj_set_scrollbar_mode(m_obj.get(), mode);
@@ -291,7 +321,9 @@ void WidgetBase::remove_style(const lv_style_t *style,
   lv_obj_remove_style(m_obj.get(), style, selector);
 }
 
-void WidgetBase::remove_style_all() const { lv_obj_remove_style_all(m_obj.get()); }
+void WidgetBase::remove_style_all() const {
+  lv_obj_remove_style_all(m_obj.get());
+}
 
 void WidgetBase::report_style_change(lv_style_t *style) const {
   lv_obj_report_style_change(style);
@@ -957,7 +989,9 @@ void WidgetBase::style_create_transition(
   lv_obj_style_create_transition(m_obj.get(), part, prev_state, new_state, tr);
 }
 
-void WidgetBase::update_layer_type() const { lv_obj_update_layer_type(m_obj.get()); }
+void WidgetBase::update_layer_type() const {
+  lv_obj_update_layer_type(m_obj.get());
+}
 
 void WidgetBase::redraw(lv_layer_t *layer) const {
   lv_obj_redraw(layer, m_obj.get());

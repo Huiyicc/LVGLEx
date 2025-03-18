@@ -9,7 +9,7 @@ namespace LVGLEx {
 bool g_LVGLEx_initd = false;
 AppConfig g_AppConfig;
 
-void Init() {
+void init() {
   lv_init();
 #ifdef _HOST_WINDOWS_
   g_AppConfig.font = Font::MakeFromFile(R"(C:\Windows\Fonts\msyh.ttc)",14);
@@ -19,7 +19,7 @@ void Init() {
   g_LVGLEx_initd = true;
 };
 
-void DeInit() {
+void deInit() {
   g_LVGLEx_initd = false;
   lv_deinit();
 }

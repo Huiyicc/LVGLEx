@@ -5,11 +5,16 @@
 #ifndef LVGLEX_WIDGET_BASE_H
 #define LVGLEX_WIDGET_BASE_H
 
+#include "../misc/matrix.h"
+#include "../misc/point.h"
 #include "../obj_pointer.h"
 #include "./widget_event_base.h"
+#include <LVGLEx/misc/area.h>
 #include <lvgl.h>
 #include <memory>
+#include <optional>
 #include <set>
+
 
 namespace LVGLEx {
 
@@ -30,73 +35,218 @@ void lv_obj_delete_anim_completed_cb(lv_anim_t *a) const;
 * */
 
 #define WIDGET_OBJ_CREATE_H(TYPE)                                              \
-  static TYPE *create(WidgetBase *parent);                                     \
-  static TYPE *create(WindowBase *parent);
+  static TYPE create(WidgetBase *parent);                                      \
+  static TYPE create(WindowBase *parent);
 #define WIDGET_OBJ_CREATE_CPP(TYPE, OBJCREATE_FUNC)                            \
-  TYPE *TYPE::create(WindowBase *parent) {                                     \
-    auto r = std::make_unique<TYPE>();                                         \
-    auto scr = parent->get_screen_active();                                    \
-    r->m_parent = parent;                                                      \
-    r->m_obj = WidgetPointer<lv_obj_t>::MakePrivatePtr(OBJCREATE_FUNC(scr));   \
-    r->init();                                                                 \
-    return dynamic_cast<TYPE *>(parent->add_widget(std::move(r)));             \
+  TYPE TYPE::create(WindowBase *parent) {                                      \
+    TYPE r;                                                                    \
+    auto scr = parent->getScreenActive();                                      \
+    r.m_obj = WidgetPointer::makeQuote(OBJCREATE_FUNC(scr.get()));             \
+    r.init();                                                                  \
+    return r;                                                                  \
   }                                                                            \
-  TYPE *TYPE::create(WidgetBase *parent) {                                     \
-    auto r = std::make_unique<TYPE>();                                         \
-    auto scr = parent->get_parent()->get_screen_active();                      \
-    r->m_parent = parent->get_parent();                                        \
-    r->m_obj = WidgetPointer<lv_obj_t>::MakePrivatePtr(OBJCREATE_FUNC(scr));   \
-    r->init();                                                                 \
-    return dynamic_cast<TYPE *>(parent->add_widget(std::move(r)));             \
+  TYPE TYPE::create(WidgetBase *parent) {                                      \
+    TYPE r;                                                                    \
+    auto scr = parent->getScreenActive();                                      \
+    r.m_obj = WidgetPointer::makeQuote(OBJCREATE_FUNC(scr.get()));             \
+    r.init();                                                                  \
+    return r;                                                                  \
   };
 
 class WidgetBase : public WidgetEventBase {
 protected:
-  WidgetPointer<lv_obj_t> m_obj;
+  WidgetPointer m_obj;
   // lv_obj_t *m_obj = nullptr;
-  WindowBase *m_parent = nullptr;
-  std::set<std::unique_ptr<WidgetBase>> m_children;
+  // WindowBase *m_parent = nullptr;
+  // std::set<std::unique_ptr<WidgetBase>> m_children;
 
   virtual void init() final;
 
 public:
   WidgetBase();
-  virtual ~WidgetBase();
+  ~WidgetBase() override;
 
-  lv_obj_t *get_obj() const;
+  lv_obj_t *getObj() const;
 
-  [[nodiscard]] WindowBase *get_parent() const;
+  static WidgetBase makeFromPtr(lv_obj_t *ptr);
 
-  WidgetBase *add_widget(std::unique_ptr<WidgetBase> &&widget);
+  [[nodiscard]] std::optional<WidgetBase> getParent() const;
+  [[nodiscard]] WindowBase *getWindow() const;
+  [[nodiscard]] WidgetPointer getScreenActive() const;
+  virtual WidgetPointer release() final;
 
-  void set_pos(int32_t x, int32_t y) const;
-  void set_x(int32_t x) const;
-  void set_y(int32_t y) const;
-  void set_size(int32_t w, int32_t h) const;
-  void set_width(int32_t w) const;
-  void set_height(int32_t h) const;
-  void set_content_width(int32_t w) const;
-  void set_content_height(int32_t h) const;
-  void set_layout(uint32_t layout) const;
-  void mark_layout_as_dirty() const;
-  void update_layout() const;
-  void set_align(lv_align_t align) const;
+  /**
+   * @brief 以相对坐标的方式设置对象的相对位置
+   * @param x 新x坐标
+   * @param y 新y坐标
+   * */
+  void setPos(int32_t x, int32_t y) const;
+
+  /**
+   * @brief 以相对坐标的方式设置对象的x坐标
+   * @param x 新x坐标
+   * */
+  void setX(int32_t x) const;
+
+  /**
+   * @brief 以相对坐标的方式设置对象的y坐标
+   * @param y 新y坐标
+   * */
+  void setY(int32_t y) const;
+
+  /**
+   * @brief 以相对坐标的方式设置对象的尺寸
+   * @param w 新宽度
+   * @param h 新高度
+   * */
+  void setSize(int32_t w, int32_t h) const;
+
+  /**
+   * @brief 以相对坐标的方式设置对象的宽度
+   * @param w 新宽度
+   * */
+  void setWidth(int32_t w) const;
+
+  /**
+   * @brief 以相对坐标的方式设置对象的高度
+   * @param h 新高度
+   * */
+  void setHeight(int32_t h) const;
+
+  /**
+   * @brief 设置对象的内容宽度
+   * 此函数设置对象的内容宽度，宽度会减去左右的内边距和边框宽度。
+   *
+   * @param w 不包含内边距的宽度
+   * */
+  void setContentWidth(int32_t w) const;
+
+  /**
+   * @brief 设置对象的内容高度
+   * 此函数设置对象的内容高度，高度会减去上下的边框高度。
+   *
+   * @param h 不包含上下边距的高度
+   * */
+  void setContentHeight(int32_t h) const;
+
+  /**
+   * @brief 设置对象的布局
+   * @param layout 指向要设置的布局描述符的指针
+   * */
+  void setLayout(uint32_t layout) const;
+
+  /**
+   * @brief 标记对象以进行布局更新
+   *
+   * 此函数将指定对象标记为需要更新其子对象的布局.
+   * (或者说将对象所在矩阵标记为脏矩阵)
+   */
+  void markLayoutAsDirty() const;
+
+  /**
+   * @brief 更新对象的布局
+   */
+  void updateLayout() const;
+
+  /**
+   * @brief 设置对象的对齐方式
+   * @param align 对齐方式, 参见`LV_ALIGN_OUT_`
+   * */
+  void setAlign(lv_align_t align) const;
+
+  /**
+   * @brief 设置对象的对齐方式,并以相对坐标的方式设置新坐标
+   *
+   * 等价于: setAlign(align);
+   * setPos(x_ofs,y_ofs);
+   *
+   * @param align 对齐方式, 参见`LV_ALIGN_OUT_`
+   * @param x_ofs x坐标偏移
+   * @param y_ofs y坐标偏移
+   * */
   void align(lv_align_t align, int32_t x_ofs, int32_t y_ofs) const;
-  void align_to(const lv_obj_t *base, lv_align_t align, int32_t x_ofs,
-                int32_t y_ofs) const;
+
+  /**
+   * @brief 将对象与基准对象对齐
+   * */
+  void alignTo(const WidgetPointer &base, lv_align_t align, int32_t x_ofs,
+               int32_t y_ofs) const;
+
+  /**
+   * @brief 将对象与其父对象的中心对齐
+   * */
   void center() const;
-  void set_transform(const lv_matrix_t *matrix) const;
-  void reset_transform() const;
-  void get_coords(lv_area_t *coords) const;
-  void get_content_coords(lv_area_t *area) const;
-  void refr_pos() const;
-  void move_to(int32_t x, int32_t y) const;
-  void move_children_by(int32_t x_diff, int32_t y_diff,
-                        bool ignore_floating) const;
-  void transform_point(lv_point_t *p,
-                       lv_obj_point_transform_flag_t flags) const;
-  void transform_point_array(lv_point_t points[], size_t count,
-                             lv_obj_point_transform_flag_t flags) const;
+
+  /**
+   * @brief 设置变换矩阵
+   * @param matrix 指向要设置的变换矩阵的指针
+   * @note 需要启用`LV_DRAW_TRANSFORM_USE_MATRIX`
+   * */
+  void setTransform(const Matrix &matrix) const;
+
+  /**
+   * @brief 重置变换矩阵为单位矩阵
+   *
+   * 此函数将指定对象的变换矩阵重置为单位矩阵。
+   *
+   * @note 需要启用 `LV_DRAW_TRANSFORM_USE_MATRIX`。
+   */
+  void resetTransform() const;
+
+  /**
+   * @brief 获取对象的坐标
+   * */
+  [[nodiscard]] Area getCoords() const;
+
+  /**
+   * @brief 获取对象的内容坐标
+   * @return 该区域在不导致父对象溢出的情况下仍然适合父对象（使父对象可滚动）
+   * @note 对象的位置仅在下次重绘时重新计算。要强制重新计算坐标，请调用
+   * `lv_obj_update_layout(obj)`。
+   * */
+  [[nodiscard]] Area getContentCoords() const;
+
+  /**
+   * @brief 刷新位置
+   * */
+  void refrPos() const;
+
+  /**
+   * @brief 移动到新坐标
+   * @param x 新x坐标
+   * @param y 新y坐标
+   * */
+  void moveTo(int32_t x, int32_t y) const;
+
+  /**
+   * @brief 移动所有子对象。
+   *
+   * 根据给定的 x 和 y 偏移量移动所有子对象。
+   *
+   * @param x_diff x 方向的偏移量，单位为像素。
+   * @param y_diff y 方向的偏移量，单位为像素。
+   * @param ignore_floating 如果为 true，则忽略浮动对象的移动。
+   */
+  void moveChildrenBy(int32_t x_diff, int32_t y_diff,
+                      bool ignore_floating) const;
+
+  /**
+   * @brief 使用对象的角度和缩放样式属性转换一个点。
+   *
+   * @param p 指向要转换的点的指针，转换结果将写回到此处。
+   * @param flags 参见 `lv_obj_point_transform_flag_t`
+   */
+  void transformPoint(Point *p, lv_obj_point_transform_flag_t flags) const;
+
+  /**
+   * @brief 使用对象的角度和缩放样式属性转换一个点数组。
+   *
+   * @param points 指向要转换的点数组的指针，转换结果将写回到此处。
+   * @param count 要转换的点的数量。
+   * @param flags 参见 `lv_obj_point_transform_flag_t`
+   */
+  void transformPointArray(std::vector<Point> &points,
+                           lv_obj_point_transform_flag_t flags) const;
   void get_transformed_area(lv_area_t *area,
                             lv_obj_point_transform_flag_t flags) const;
   void invalidate_area(const lv_area_t *area) const;
