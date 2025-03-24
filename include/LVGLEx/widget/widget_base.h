@@ -5,12 +5,9 @@
 #ifndef LVGLEX_WIDGET_BASE_H
 #define LVGLEX_WIDGET_BASE_H
 
-#include "../misc/matrix.h"
-#include "../misc/point.h"
 #include "../obj_pointer.h"
 #include "./widget_event_base.h"
-#include <LVGLEx/misc/area.h>
-#include <LVGLEx/misc/style.h>
+#include <LVGLEx/obj_global.h>
 #include <lvgl.h>
 #include <memory>
 #include <optional>
@@ -19,6 +16,11 @@
 namespace LVGLEx {
 
 class WindowBase;
+class Layer;
+class Matrix;
+class Point;
+class Area;
+class Style;
 
 /*
 void func_name_end(int32_t size) const;
@@ -35,25 +37,32 @@ void lv_obj_delete_anim_completed_cb(lv_anim_t *a) const;
 * */
 
 #define WIDGET_OBJ_CREATE_H(TYPE)                                              \
-  static TYPE create(WidgetBase *parent);                                      \
-  static TYPE create(WindowBase *parent);
+  static TYPE create(WidgetBase *parent) noexcept;                             \
+  static TYPE create(WindowBase *parent) noexcept;                             \
+  TYPE(TYPE &&other) noexcept;                                                 \
+  TYPE &operator=(TYPE &&other) noexcept;
 #define WIDGET_OBJ_CREATE_CPP(TYPE, OBJCREATE_FUNC)                            \
-  TYPE TYPE::create(WindowBase *parent) {                                      \
+  TYPE TYPE::create(WindowBase *parent) noexcept {                             \
     TYPE r;                                                                    \
     auto scr = parent->getScreenActive();                                      \
     r.m_obj = WidgetPointer::makeQuote(OBJCREATE_FUNC(scr.get()));             \
     r.init();                                                                  \
     return r;                                                                  \
   }                                                                            \
-  TYPE TYPE::create(WidgetBase *parent) {                                      \
+  TYPE TYPE::create(WidgetBase *parent) noexcept {                             \
     TYPE r;                                                                    \
     auto scr = parent->getScreenActive();                                      \
     r.m_obj = WidgetPointer::makeQuote(OBJCREATE_FUNC(scr.get()));             \
     r.init();                                                                  \
     return r;                                                                  \
-  };
-
+  };                                                                           \
+  TYPE::TYPE(TYPE &&other) noexcept { *this = std::move(other); }              \
+  TYPE &TYPE::operator=(TYPE &&other) noexcept {                               \
+    m_obj = std::move(other.m_obj);                                            \
+    return *this;                                                              \
+  }
 class WidgetBase : public WidgetEventBase {
+private:
 protected:
   WidgetPointer m_obj;
   // lv_obj_t *m_obj = nullptr;
@@ -66,7 +75,10 @@ public:
   WidgetBase();
   ~WidgetBase() override;
 
-  lv_obj_t *getObj() const;
+  WidgetBase(WidgetBase &&other) noexcept;
+  WidgetBase &operator=(WidgetBase &&other) noexcept;
+
+  [[nodiscard]] lv_obj_t *getObj() const;
 
   static WidgetBase makeFromPtr(lv_obj_t *ptr);
 
@@ -236,13 +248,12 @@ public:
    * @param flags 参见 `lv_obj_point_transform_flag_t`
    * @return 转换后的点。
    */
-  Point transformPoint(lv_obj_point_transform_flag_t flags) const;
+  [[nodiscard]] Point transformPoint(lv_obj_point_transform_flag_t flags) const;
 
   /**
    * @brief 使用对象的角度和缩放样式属性转换一个点数组。
    *
    * @param points 指向要转换的点数组的指针，转换结果将写回到此处。
-   * @param count 要转换的点的数量。
    * @param flags 参见 `lv_obj_point_transform_flag_t`
    */
   void transformPointArray(std::vector<Point> &points,
@@ -253,7 +264,8 @@ public:
    * @param flags 参见 `lv_obj_point_transform_flag_t`
    * @return 转换后的区域。
    */
-  Area getTransformedArea(lv_obj_point_transform_flag_t flags) const;
+  [[nodiscard]] Area
+  getTransformedArea(lv_obj_point_transform_flag_t flags) const;
 
   /**
    * @brief 使指定区域无效，需要重绘。
@@ -854,174 +866,1078 @@ public:
   void setStyleTransformSkewY(int32_t value,
                               lv_style_selector_t selector) const;
 
-  void set_style_pad_top(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_bottom(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_left(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_right(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_row(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_column(int32_t value, lv_style_selector_t selector) const;
-  void set_style_pad_radial(int32_t value, lv_style_selector_t selector) const;
-  void set_style_margin_top(int32_t value, lv_style_selector_t selector) const;
-  void set_style_margin_bottom(int32_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_margin_left(int32_t value, lv_style_selector_t selector) const;
-  void set_style_margin_right(int32_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_bg_color(lv_color_t value, lv_style_selector_t selector) const;
-  void set_style_bg_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_bg_grad_color(lv_color_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_bg_grad_dir(lv_grad_dir_t value,
-                             lv_style_selector_t selector) const;
-  void set_style_bg_main_stop(int32_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_bg_grad_stop(int32_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_bg_main_opa(lv_opa_t value,
-                             lv_style_selector_t selector) const;
-  void set_style_bg_grad_opa(lv_opa_t value,
-                             lv_style_selector_t selector) const;
-  void set_style_bg_grad(const lv_grad_dsc_t *value,
+  /**
+   * @brief 设置样式的顶部内边距。
+   *
+   * @param value 内边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStylePadTop(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的底部内边距。
+   *
+   * @param value 内边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStylePadBottom(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的左侧内边距。
+   *
+   * @param value 内边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStylePadLeft(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的右侧内边距。
+   *
+   * @param value 内边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStylePadRight(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的行间距。
+   *
+   * @param value 行间距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStylePadRow(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的列间距。
+   *
+   * @param value 列间距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStylePadColumn(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的径向内边距。
+   *
+   * @param value 径向内边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStylePadRadial(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的顶部外边距。
+   *
+   * @param value 外边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleMarginTop(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的底部外边距。
+   *
+   * @param value 外边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleMarginBottom(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的左侧外边距。
+   *
+   * @param value 外边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleMarginLeft(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的右侧外边距。
+   *
+   * @param value 外边距的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleMarginRight(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景颜色。
+   *
+   * @param value 背景颜色的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgColor(lv_color_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景不透明度。
+   *
+   * @param value 背景不透明度的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景渐变颜色。
+   *
+   * @param value 背景渐变颜色的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgGradColor(lv_color_t value,
+                           lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景渐变方向。
+   *
+   * @param value 背景渐变方向的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgGradDir(lv_grad_dir_t value,
                          lv_style_selector_t selector) const;
-  void set_style_bg_image_src(const void *value,
-                              lv_style_selector_t selector) const;
-  void set_style_bg_image_opa(lv_opa_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_bg_image_recolor(lv_color_t value,
-                                  lv_style_selector_t selector) const;
-  void set_style_bg_image_recolor_opa(lv_opa_t value,
-                                      lv_style_selector_t selector) const;
-  void set_style_bg_image_tiled(bool value, lv_style_selector_t selector) const;
-  void set_style_border_color(lv_color_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_border_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_border_width(int32_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_border_side(lv_border_side_t value,
-                             lv_style_selector_t selector) const;
-  void set_style_border_post(bool value, lv_style_selector_t selector) const;
-  void set_style_outline_width(int32_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_outline_color(lv_color_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_outline_opa(lv_opa_t value,
-                             lv_style_selector_t selector) const;
-  void set_style_outline_pad(int32_t value, lv_style_selector_t selector) const;
-  void set_style_shadow_width(int32_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_shadow_offset_x(int32_t value,
-                                 lv_style_selector_t selector) const;
-  void set_style_shadow_offset_y(int32_t value,
-                                 lv_style_selector_t selector) const;
-  void set_style_shadow_spread(int32_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_shadow_color(lv_color_t value,
-                              lv_style_selector_t selector) const;
-  void set_style_shadow_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_image_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_image_recolor(lv_color_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_image_recolor_opa(lv_opa_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_line_width(int32_t value, lv_style_selector_t selector) const;
-  void set_style_line_dash_width(int32_t value,
-                                 lv_style_selector_t selector) const;
-  void set_style_line_dash_gap(int32_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_line_rounded(bool value, lv_style_selector_t selector) const;
-  void set_style_line_color(lv_color_t value,
-                            lv_style_selector_t selector) const;
-  void set_style_line_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_arc_width(int32_t value, lv_style_selector_t selector) const;
-  void set_style_arc_rounded(bool value, lv_style_selector_t selector) const;
-  void set_style_arc_color(lv_color_t value,
-                           lv_style_selector_t selector) const;
-  void set_style_arc_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_arc_image_src(const void *value,
-                               lv_style_selector_t selector) const;
-  void set_style_text_color(lv_color_t value,
-                            lv_style_selector_t selector) const;
-  void set_style_text_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_text_font(const lv_font_t *value,
-                           lv_style_selector_t selector) const;
-  void set_style_text_letter_space(int32_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_text_line_space(int32_t value,
-                                 lv_style_selector_t selector) const;
-  void set_style_text_decor(lv_text_decor_t value,
-                            lv_style_selector_t selector) const;
-  void set_style_text_align(lv_text_align_t value,
-                            lv_style_selector_t selector) const;
-  void set_style_radius(int32_t value, lv_style_selector_t selector) const;
-  void set_style_radial_offset(int32_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_clip_corner(bool value, lv_style_selector_t selector) const;
-  void set_style_opa(lv_opa_t value, lv_style_selector_t selector) const;
-  void set_style_opa_layered(lv_opa_t value,
-                             lv_style_selector_t selector) const;
-  void set_style_color_filter_dsc(const lv_color_filter_dsc_t *value,
-                                  lv_style_selector_t selector) const;
-  void set_style_color_filter_opa(lv_opa_t value,
-                                  lv_style_selector_t selector) const;
-  void set_style_anim(const lv_anim_t *value,
+
+  /**
+   * @brief 设置样式的背景渐变起始位置。
+   *
+   * @param value 背景渐变起始位置的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgMainStop(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景渐变终止位置。
+   *
+   * @param value 背景渐变终止位置的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgGradStop(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景主颜色不透明度。
+   *
+   * @param value 背景主颜色不透明度的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgMainOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景渐变颜色不透明度。
+   *
+   * @param value 背景渐变颜色不透明度的值。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgGradOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的背景渐变描述信息。
+   *
+   * @param value 指向背景渐变描述信息的指针。
+   * @param selector 样式选择器，用于指定应用样式的目标。
+   */
+  void setStyleBgGrad(const lv_grad_dsc_t *value,
                       lv_style_selector_t selector) const;
-  void set_style_anim_duration(uint32_t value,
-                               lv_style_selector_t selector) const;
-  void set_style_transition(const lv_style_transition_dsc_t *value,
-                            lv_style_selector_t selector) const;
-  void set_style_blend_mode(lv_blend_mode_t value,
-                            lv_style_selector_t selector) const;
-  void set_style_layout(uint16_t value, lv_style_selector_t selector) const;
-  void set_style_base_dir(lv_base_dir_t value,
+
+  /**
+   * @brief 设置背景图像的源。
+   *
+   * @param value 图像源。
+   * @param selector 样式选择器。
+   */
+  void setStyleBgImageSrc(const void *value,
                           lv_style_selector_t selector) const;
-  void set_style_bitmap_mask_src(const void *value,
+
+  /**
+   * @brief 设置背景图像的不透明度。
+   *
+   * @param value 不透明度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleBgImageOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置背景图像的重新着色颜色。
+   *
+   * @param value 重新着色颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleBgImageRecolor(lv_color_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置背景图像的重新着色不透明度。
+   *
+   * @param value 重新着色不透明度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleBgImageRecolorOpa(lv_opa_t value,
                                  lv_style_selector_t selector) const;
-  void set_style_rotary_sensitivity(uint32_t value,
-                                    lv_style_selector_t selector) const;
-  void set_style_flex_flow(lv_flex_flow_t value,
+
+  /**
+   * @brief 设置背景图像是否平铺。
+   *
+   * @param value 是否平铺。
+   * @param selector 样式选择器。
+   */
+  void setStyleBgImageTiled(bool value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置边框颜色。
+   *
+   * @param value 边框颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleBorderColor(lv_color_t value,
                            lv_style_selector_t selector) const;
-  void set_style_flex_main_place(lv_flex_align_t value,
+
+  /**
+   * @brief 设置边框不透明度。
+   *
+   * @param value 边框不透明度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleBorderOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置边框宽度。
+   *
+   * @param value 边框宽度。
+   * @param selector 样式选择器。
+   */
+  void setStyleBorderWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置边框的边。
+   *
+   * @param value 边框边。
+   * @param selector 样式选择器。
+   */
+  void setStyleBorderSide(lv_border_side_t value,
+                          lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置边框是否在内容之后绘制。
+   *
+   * @param value 是否在内容之后绘制。
+   * @param selector 样式选择器。
+   */
+  void setStyleBorderPost(bool value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置轮廓宽度。
+   *
+   * @param value 轮廓宽度。
+   * @param selector 样式选择器。
+   */
+  void setStyleOutlineWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置轮廓颜色。
+   *
+   * @param value 轮廓颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleOutlineColor(lv_color_t value,
+                            lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置轮廓不透明度。
+   *
+   * @param value 轮廓不透明度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleOutlineOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置轮廓填充。
+   *
+   * @param value 轮廓填充。
+   * @param selector 样式选择器。
+   */
+  void setStyleOutlinePad(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置阴影宽度。
+   *
+   * @param value 阴影宽度。
+   * @param selector 样式选择器。
+   */
+  void setStyleShadowWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置阴影的X轴偏移。
+   *
+   * @param value X轴偏移。
+   * @param selector 样式选择器。
+   */
+  void setStyleShadowOffsetX(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置阴影的Y轴偏移。
+   *
+   * @param value Y轴偏移。
+   * @param selector 样式选择器。
+   */
+  void setStyleShadowOffsetY(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置阴影的扩展。
+   *
+   * @param value 阴影扩展。
+   * @param selector 样式选择器。
+   */
+  void setStyleShadowSpread(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置阴影颜色。
+   *
+   * @param value 阴影颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleShadowColor(lv_color_t value,
+                           lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置阴影不透明度。
+   *
+   * @param value 阴影不透明度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleShadowOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置图像不透明度。
+   *
+   * @param value 图像不透明度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleImageOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置图像的重新着色颜色。
+   *
+   * @param value 重新着色颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleImageRecolor(lv_color_t value,
+                            lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置图像的重新着色不透明度。
+   *
+   * @param value 重新着色不透明度值。
+   * @param selector 样式选择器。
+   */
+  void setStyleImageRecolorOpa(lv_opa_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的线宽。
+   *
+   * @param value 线宽的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleLineWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的线条虚线宽度。
+   *
+   * @param value 虚线宽度的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleLineDashWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的线条虚线间隔。
+   *
+   * @param value 虚线间隔的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleLineDashGap(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的线条是否圆角。
+   *
+   * @param value 是否圆角。
+   * @param selector 样式选择器。
+   */
+  void setStyleLineRounded(bool value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的线条颜色。
+   *
+   * @param value 线条颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleLineColor(lv_color_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的线条不透明度。
+   *
+   * @param value 线条不透明度。
+   * @param selector 样式选择器。
+   */
+  void setStyleLineOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的弧宽度。
+   *
+   * @param value 弧宽度的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleArcWidth(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的弧是否圆角。
+   *
+   * @param value 是否圆角。
+   * @param selector 样式选择器。
+   */
+  void setStyleArcRounded(bool value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的弧颜色。
+   *
+   * @param value 弧颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleArcColor(lv_color_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的弧不透明度。
+   *
+   * @param value 弧不透明度。
+   * @param selector 样式选择器。
+   */
+  void setStyleArcOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的弧图像源。
+   *
+   * @param value 弧图像源。
+   * @param selector 样式选择器。
+   */
+  void setStyleArcImageSrc(const void *value,
+                           lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的文本颜色。
+   *
+   * @param value 文本颜色。
+   * @param selector 样式选择器。
+   */
+  void setStyleTextColor(lv_color_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的文本不透明度。
+   *
+   * @param value 文本不透明度。
+   * @param selector 样式选择器。
+   */
+  void setStyleTextOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的文本字体。
+   *
+   * @param value 文本字体。
+   * @param selector 样式选择器。
+   */
+  void setStyleTextFont(const lv_font_t *value,
+                        lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的文本字母间距。
+   *
+   * @param value 字母间距的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleTextLetterSpace(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的文本行间距。
+   *
+   * @param value 行间距的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleTextLineSpace(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的文本装饰。
+   *
+   * @param value 文本装饰。
+   * @param selector 样式选择器。
+   */
+  void setStyleTextDecor(lv_text_decor_t value,
+                         lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的文本对齐方式。
+   *
+   * @param value 文本对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleTextAlign(lv_text_align_t value,
+                         lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的圆角半径。
+   *
+   * @param value 圆角半径的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleRadius(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的径向偏移。
+   *
+   * @param value 径向偏移的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleRadialOffset(int32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的剪裁角标志。
+   *
+   * @param value 剪裁角标志的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleClipCorner(bool value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的不透明度。
+   *
+   * @param value 不透明度的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleOpa(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的分层不透明度。
+   *
+   * @param value 分层不透明度的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleOpaLayered(lv_opa_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的颜色过滤描述符。
+   *
+   * @param value 指向颜色过滤描述符的指针。
+   * @param selector 样式选择器。
+   */
+  void setStyleColorFilterDsc(const lv_color_filter_dsc_t *value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的颜色过滤不透明度。
+   *
+   * @param value 颜色过滤不透明度的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleColorFilterOpa(lv_opa_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的动画。
+   *
+   * @param value 指向动画的指针。
+   * @param selector 样式选择器。
+   */
+  void setStyleAnim(const lv_anim_t *value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的动画持续时间。
+   *
+   * @param value 动画持续时间的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleAnimDuration(uint32_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的过渡描述符。
+   *
+   * @param value 指向过渡描述符的指针。
+   * @param selector 样式选择器。
+   */
+  void setStyleTransition(const lv_style_transition_dsc_t *value,
+                          lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的混合模式。
+   *
+   * @param value 混合模式的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleBlendMode(lv_blend_mode_t value,
+                         lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的布局。
+   *
+   * @param value 布局的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleLayout(uint16_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的基方向。
+   *
+   * @param value 基方向的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleBaseDir(lv_base_dir_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的位图遮罩源。
+   *
+   * @param value 指向位图遮罩源的指针。
+   * @param selector 样式选择器。
+   */
+  void setStyleBitmapMaskSrc(const void *value,
+                             lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的旋转灵敏度。
+   *
+   * @param value 旋转灵敏度的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleRotarySensitivity(uint32_t value,
                                  lv_style_selector_t selector) const;
-  void set_style_flex_cross_place(lv_flex_align_t value,
+
+  /**
+   * @brief 设置样式的弹性流动。
+   *
+   * @param value 弹性流动的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleFlexFlow(lv_flex_flow_t value,
+                        lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置样式的弹性主对齐。
+   *
+   * @param value 弹性主对齐的值。
+   * @param selector 样式选择器。
+   */
+  void setStyleFlexMainPlace(lv_flex_align_t value,
+                             lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置弹性布局的交叉轴对齐方式。
+   *
+   * @param value 弹性布局的交叉轴对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleFlexCrossPlace(lv_flex_align_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置弹性布局的主轴对齐方式。
+   *
+   * @param value 弹性布局的主轴对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleFlexTrackPlace(lv_flex_align_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置弹性布局的增长因子。
+   *
+   * @param value 弹性布局的增长因子。
+   * @param selector 样式选择器。
+   */
+  void setStyleFlexGrow(uint8_t value, lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置网格布局的列描述数组。
+   *
+   * @param value 指向列描述数组的指针。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridColumnDscArray(const int32_t *value,
                                   lv_style_selector_t selector) const;
-  void set_style_flex_track_place(lv_flex_align_t value,
+
+  /**
+   * @brief 设置网格布局的列对齐方式。
+   *
+   * @param value 网格布局的列对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridColumnAlign(lv_grid_align_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置网格布局的行描述数组。
+   *
+   * @param value 指向行描述数组的指针。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridRowDscArray(const int32_t *value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置网格布局的行对齐方式。
+   *
+   * @param value 网格布局的行对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridRowAlign(lv_grid_align_t value,
+                            lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置网格单元格的列位置。
+   *
+   * @param value 网格单元格的列位置。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridCellColumnPos(int32_t value,
+                                 lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置网格单元格的水平对齐方式。
+   *
+   * @param value 网格单元格的水平对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridCellXAlign(lv_grid_align_t value,
+                              lv_style_selector_t selector) const;
+
+  /**
+   * @brief 设置网格单元格的列跨度。
+   *
+   * @param value 网格单元格的列跨度。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridCellColumnSpan(int32_t value,
                                   lv_style_selector_t selector) const;
-  void set_style_flex_grow(uint8_t value, lv_style_selector_t selector) const;
-  void set_style_grid_column_dsc_array(const int32_t *value,
-                                       lv_style_selector_t selector) const;
-  void set_style_grid_column_align(lv_grid_align_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_grid_row_dsc_array(const int32_t *value,
-                                    lv_style_selector_t selector) const;
-  void set_style_grid_row_align(lv_grid_align_t value,
-                                lv_style_selector_t selector) const;
-  void set_style_grid_cell_column_pos(int32_t value,
-                                      lv_style_selector_t selector) const;
-  void set_style_grid_cell_x_align(lv_grid_align_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_grid_cell_column_span(int32_t value,
-                                       lv_style_selector_t selector) const;
-  void set_style_grid_cell_row_pos(int32_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_grid_cell_y_align(lv_grid_align_t value,
-                                   lv_style_selector_t selector) const;
-  void set_style_grid_cell_row_span(int32_t value,
-                                    lv_style_selector_t selector) const;
 
-  void delete_delayed(uint32_t delay_ms) const;
-  void delete_async() const;
-  void set_parent(lv_obj_t *parent) const;
-  void swap(lv_obj_t *obj2) const;
-  void move_to_index(int32_t index) const;
-  void tree_walk(lv_obj_tree_walk_cb_t cb, void *user_data) const;
-  void dump_tree() const;
+  /**
+   * @brief 设置网格单元格的行位置。
+   *
+   * @param value 网格单元格的行位置。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridCellRowPos(int32_t value,
+                              lv_style_selector_t selector) const;
 
-  void style_create_transition(lv_part_t part, lv_state_t prev_state,
-                               lv_state_t new_state,
-                               const lv_obj_style_transition_dsc_t *tr) const;
-  void update_layer_type() const;
+  /**
+   * @brief 设置网格单元格的垂直对齐方式。
+   *
+   * @param value 网格单元格的垂直对齐方式。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridCellYAlign(lv_grid_align_t value,
+                              lv_style_selector_t selector) const;
 
-  void redraw(lv_layer_t *layer) const;
+  /**
+   * @brief 设置网格单元格的行跨度。
+   *
+   * @param value 网格单元格的行跨度。
+   * @param selector 样式选择器。
+   */
+  void setStyleGridCellRowSpan(int32_t value,
+                               lv_style_selector_t selector) const;
+
+  /**
+   * @brief 延迟删除对象。
+   *
+   * @param delayMs 延迟的毫秒数。
+   */
+  void deleteDelayed(uint32_t delayMs) const;
+
+  /**
+   * @brief 异步删除对象。
+   */
+  void deleteAsync() const;
+
+  /**
+   * @brief 设置对象的父对象。
+   *
+   * @param parent 指向父对象。
+   */
+  void setParent(const WidgetBase &parent) const;
+
+  /**
+   * @brief 交换两个对象的位置。
+   *
+   * @param obj2 指向要交换的对象。
+   */
+  void swap(WidgetBase &obj2) const noexcept;
+
+  /**
+   * @brief 将对象移动到指定的索引位置。
+   *
+   * @param index 目标索引位置。
+   */
+  void moveToIndex(int32_t index) const;
+
+  /**
+   * @brief 遍历对象树。
+   *
+   * @param cb 回调函数，用于处理树中的每个对象。
+   * @param userData 用户数据，将传递给回调函数。
+   */
+  void treeWalk(const LvObjTreeWalkCbHandel &cb, void *userData);
+
+  /**
+   * @brief 打印对象树的结构。
+   */
+  void dumpTree() const;
+
+  /**
+   * @brief 为对象创建样式过渡。
+   *
+   * @param part 对象的部分。
+   * @param prevState 之前的状态。
+   * @param newState 新的状态。
+   * @param tr 指向样式过渡描述的指针。
+   */
+  void styleCreateTransition(lv_part_t part, lv_state_t prevState,
+                             lv_state_t newState,
+                             const lv_obj_style_transition_dsc_t *tr) const;
+
+  /**
+   * @brief 更新对象的图层类型。
+   */
+  void updateLayerType() const;
+
+  /**
+   * @brief 重绘指定的图层。
+   *
+   * @param layer 指向要重绘的图层的指针。
+   */
+  void redraw(Layer &layer) const;
+
+  /**
+   * @brief 根据给定的屏幕空间中的点对对象进行命中测试。
+   *
+   * @param point 屏幕空间中的点（绝对坐标）。
+   * @return 如果对象被认为在该点下方，则返回 true；否则返回 false。
+   *
+   * @example
+   * @code
+   * Point myPoint(x, y);
+   * bool isHit = obj.hitTest(myPoint);
+   * if (isHit) {
+   *     // 对象在点下方，可以进行相应处理
+   * }
+   * @endcode
+   */
+  [[nodiscard]] bool hitTest(const Point &point) const;
+
+  /**
+   * @brief 获取当前对象所在的屏幕。
+   *
+   * @return 包含屏幕对象的WidgetBase。
+   */
+  [[nodiscard]] WidgetBase getScreen() const;
+
+  /**
+   * @brief 获取当前对象所在的显示器。
+   *
+   * @return 包含显示器指针的DisplayPointer。
+   */
+  [[nodiscard]] DisplayPointer getDisplay() const;
+
+  /**
+   * @brief 获取当前对象的父对象。
+   *
+   * @return 包含父对象的WidgetBase。
+   */
+  [[nodiscard]] WidgetBase getParent();
+
+  /**
+   * @brief 获取当前对象的指定索引的子对象。
+   *
+   * @param idx 子对象的索引。
+   * @return 包含子对象的WidgetBase。
+   */
+  [[nodiscard]] WidgetBase getChild(int32_t idx) const;
+
+  /**
+   * @brief 根据类型获取当前对象的指定索引的子对象。
+   *
+   * @param idx 子对象的索引。
+   * @param class_p 指向对象类型的指针。
+   * @return 包含子对象的WidgetBase。
+   */
+  [[nodiscard]] WidgetBase getChildByType(int32_t idx,
+                                          const lv_obj_class_t *class_p) const;
+
+  /**
+   * @brief 获取当前对象的指定索引的兄弟对象。
+   *
+   * @param idx 兄弟对象的索引。
+   * @return 包含兄弟对象的WidgetBase。
+   */
+  [[nodiscard]] WidgetBase getSibling(int32_t idx) const;
+
+  /**
+   * @brief 根据类型获取当前对象的指定索引的兄弟对象。
+   *
+   * @param idx 兄弟对象的索引。
+   * @param class_p 指向对象类型的指针。
+   * @return 包含兄弟对象的WidgetBase。
+   */
+  [[nodiscard]] WidgetBase
+  getSiblingByType(int32_t idx, const lv_obj_class_t *class_p) const;
+
+  /**
+   * @brief 获取当前对象的子对象数量。
+   *
+   * @return 子对象的数量。
+   */
+  [[nodiscard]] uint32_t getChildCount() const;
+
+  /**
+   * @brief 根据类型获取当前对象的子对象数量。
+   *
+   * @param class_p 指向对象类型的指针。
+   * @return 子对象的数量。
+   */
+  uint32_t getChildCountByType(const lv_obj_class_t *class_p) const;
+
+  /**
+   * @brief 获取对象的索引。
+   *
+   * @return 返回对象的索引。
+   */
+  int32_t getIndex() const;
+
+  /**
+   * @brief 根据类型获取对象的索引。
+   *
+   * @param class_p 指向对象类的指针。
+   * @return 返回对象的索引。
+   */
+  int32_t getIndexByType(const lv_obj_class_t *class_p) const;
+
+  /**
+   * @brief 获取对象的坐标。
+   *
+   * @param coords 将对象的坐标写入此区域。
+   */
+  void getCoords(Area &coords) const;
+
+  /**
+   * @brief 获取对象的X坐标。
+   *
+   * @return 返回对象的X坐标。
+   */
+  int32_t getX() const;
+
+  /**
+   * @brief 获取对象的X2坐标。
+   *
+   * @return 返回对象的X2坐标。
+   */
+  int32_t getX2() const;
+
+  /**
+   * @brief 获取对象的Y坐标。
+   *
+   * @return 返回对象的Y坐标。
+   */
+  int32_t getY() const;
+
+  /**
+   * @brief 获取对象的Y2坐标。
+   *
+   * @return 返回对象的Y2坐标。
+   */
+  int32_t getY2() const;
+
+  /**
+   * @brief 获取对象对齐后的X坐标。
+   *
+   * @return 返回对齐后的X坐标。
+   */
+  int32_t getXAligned() const;
+
+  /**
+   * @brief 获取对象对齐后的Y坐标。
+   *
+   * @return 返回对齐后的Y坐标。
+   */
+  int32_t getYAligned() const;
+
+  /**
+   * @brief 获取对象的宽度。
+   *
+   * @return 返回对象的宽度。
+   */
+  int32_t getWidth() const;
+
+  /**
+   * @brief 获取对象的高度。
+   *
+   * @return 返回对象的高度。
+   */
+  int32_t getHeight() const;
+
+  /**
+   * @brief 获取对象的内容宽度。
+   *
+   * @return 内容宽度，以像素为单位。
+   */
+  int32_t getContentWidth() const;
+
+  /**
+   * @brief 获取对象的内容高度。
+   *
+   * @return 内容高度，以像素为单位。
+   */
+  int32_t getContentHeight() const;
+
+  /**
+   * @brief 获取对象的内容区域的坐标。
+   *
+   * @param area 指向存储内容区域坐标的 `Area` 对象。
+   */
+  void getContentCoords(Area &area) const;
+
+  /**
+   * @brief 获取对象自身的宽度。
+   *
+   * @return 对象自身宽度，以像素为单位。
+   */
+  int32_t getSelfWidth() const;
+
+  /**
+   * @brief 获取对象自身的高度。
+   *
+   * @return 对象自身高度，以像素为单位。
+   */
+  int32_t getSelfHeight() const;
+
+  /**
+   * @brief 获取对象的变换矩阵。
+   *
+   * @return 对象的变换矩阵 `Matrix`。
+   */
+  const Matrix getTransform() const;
+
+  /**
+   * @brief 获取对象变换后的区域。
+   *
+   * @param area 指向存储变换后区域的 `Area` 对象。
+   * @param flags 变换标志，参见 `lv_obj_point_transform_flag_t`。
+   */
+  void getTransformedArea(Area &area, lv_obj_point_transform_flag_t flags) const;
+
+  /**
+   * @brief 使对象的区域失效，从而触发重绘。
+   */
+  void invalidate();
+
+  /**
+   * @brief 检查指定区域是否可见。
+   *
+   * @param area 指向要检查的区域的 `Area` 对象。
+   * @return 如果区域可见则返回 `true`，否则返回 `false`。
+   */
+  bool areaIsVisible(Area &area) const;
+
+  /**
+   * @brief 检查对象是否可见。
+   *
+   * @return 如果对象可见则返回 `true`，否则返回 `false`。
+   */
+  bool isVisible() const;
+
 };
 
 } // namespace LVGLEx

@@ -4,24 +4,32 @@
 
 #ifndef LVGLEX_MISC_AREA_H
 #define LVGLEX_MISC_AREA_H
-
-#include "misc/lv_area.h"
+#include <LVGLEx/obj_pointer.h>
+#include <cstdint>
+#include <misc/lv_area.h>
 
 namespace LVGLEx {
 
 class Area {
 private:
-  lv_area_t m_area{};
+  struct AreaPointerDeleter {
+    void operator()(lv_area_t *ptr) const;
+  };
+  typedef PointerPack<lv_area_t,AreaPointerDeleter> AreaPointer;
+  AreaPointer m_area;
 
 public:
+
   Area();
   Area(const lv_area_t *matrix);
   Area(const lv_area_t &matrix);
-  Area(const Area &matrix);
+  Area(const Area &);
   ~Area();
 
+  Area &operator=(const Area &);
+
   const lv_area_t *get() const;
-  lv_area_t *getPtr();
+  lv_area_t *getPtr() const;
 
   /**
    * 设置坐标

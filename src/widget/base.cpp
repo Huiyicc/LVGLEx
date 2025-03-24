@@ -1,7 +1,11 @@
 //
 // Created by 19254 on 24-12-16.
 //
+#include <LVGLEx/draw/layer.h>
+#include <LVGLEx/misc/area.h>
+#include <LVGLEx/misc/matrix.h>
 #include <LVGLEx/misc/point.h>
+#include <LVGLEx/misc/style.h>
 #include <LVGLEx/widget/widget_base.h>
 #include <LVGLEx/window.h>
 #include <core/lv_obj_pos.h>
@@ -29,12 +33,21 @@ void WidgetBase::init() {
 
 lv_obj_t *WidgetBase::getObj() const { return m_obj.get(); };
 
-WidgetPointer WidgetBase::release() { return m_obj.release(); };
+WidgetPointer WidgetBase::release() { return WidgetPointer(m_obj.release()); };
 
 WidgetBase WidgetBase::makeFromPtr(lv_obj_t *ptr) {
   auto w = WidgetBase();
   w.m_obj = WidgetPointer::makeQuote(ptr);
   return w;
+}
+
+WidgetBase::WidgetBase(WidgetBase &&other) noexcept {
+  *this = std::move(other);
+}
+
+WidgetBase &WidgetBase::operator=(WidgetBase &&other) noexcept {
+  m_obj = std::move(other.m_obj);
+  return *this;
 }
 
 std::optional<WidgetBase> WidgetBase::getParent() const {
@@ -211,27 +224,27 @@ void WidgetBase::allocateSpecAttr() const {
 void WidgetBase::classInitObj() const { lv_obj_class_init_obj(m_obj.get()); }
 
 void WidgetBase::initDrawRectDsc(lv_part_t part,
-                                    lv_draw_rect_dsc_t *draw_dsc) const {
+                                 lv_draw_rect_dsc_t *draw_dsc) const {
   lv_obj_init_draw_rect_dsc(m_obj.get(), part, draw_dsc);
 }
 
 void WidgetBase::initDrawLabelDsc(lv_part_t part,
-                                     lv_draw_label_dsc_t *draw_dsc) const {
+                                  lv_draw_label_dsc_t *draw_dsc) const {
   lv_obj_init_draw_label_dsc(m_obj.get(), part, draw_dsc);
 }
 
 void WidgetBase::initDrawImageDsc(lv_part_t part,
-                                     lv_draw_image_dsc_t *draw_dsc) const {
+                                  lv_draw_image_dsc_t *draw_dsc) const {
   lv_obj_init_draw_image_dsc(m_obj.get(), part, draw_dsc);
 }
 
 void WidgetBase::initDrawLineDsc(lv_part_t part,
-                                    lv_draw_line_dsc_t *draw_dsc) const {
+                                 lv_draw_line_dsc_t *draw_dsc) const {
   lv_obj_init_draw_line_dsc(m_obj.get(), part, draw_dsc);
 }
 
 void WidgetBase::initDrawArcDsc(lv_part_t part,
-                                   lv_draw_arc_dsc_t *draw_dsc) const {
+                                lv_draw_arc_dsc_t *draw_dsc) const {
   lv_obj_init_draw_arc_dsc(m_obj.get(), part, draw_dsc);
 }
 
@@ -268,17 +281,17 @@ void WidgetBase::getScrollEnd(lv_point_t *end) const {
 }
 
 void WidgetBase::scrollBy(int32_t dx, int32_t dy,
-                           lv_anim_enable_t anim_en) const {
+                          lv_anim_enable_t anim_en) const {
   lv_obj_scroll_by(m_obj.get(), dx, dy, anim_en);
 }
 
 void WidgetBase::scrollByBounded(int32_t dx, int32_t dy,
-                                   lv_anim_enable_t anim_en) const {
+                                 lv_anim_enable_t anim_en) const {
   lv_obj_scroll_by_bounded(m_obj.get(), dx, dy, anim_en);
 }
 
 void WidgetBase::scrollTo(int32_t x, int32_t y,
-                           lv_anim_enable_t anim_en) const {
+                          lv_anim_enable_t anim_en) const {
   lv_obj_scroll_to(m_obj.get(), x, y, anim_en);
 }
 
@@ -314,13 +327,13 @@ void WidgetBase::readjustScroll(lv_anim_enable_t anim_en) const {
   lv_obj_readjust_scroll(m_obj.get(), anim_en);
 }
 
-void WidgetBase::addStyle(const Style&style,
-                           lv_style_selector_t selector) const {
+void WidgetBase::addStyle(const Style &style,
+                          lv_style_selector_t selector) const {
   lv_obj_add_style(m_obj.get(), style.get(), selector);
 }
 
-void WidgetBase::removeStyle(const Style& style,
-                              lv_style_selector_t selector) const {
+void WidgetBase::removeStyle(const Style &style,
+                             lv_style_selector_t selector) const {
   lv_obj_remove_style(m_obj.get(), style.get(), selector);
 }
 
@@ -328,7 +341,7 @@ void WidgetBase::removeStyleAll() const {
   lv_obj_remove_style_all(m_obj.get());
 }
 
-void WidgetBase::reportStyleChange(Style& style) {
+void WidgetBase::reportStyleChange(Style &style) {
   lv_obj_report_style_change(style.getPtr());
 }
 
@@ -340,9 +353,8 @@ void WidgetBase::enableStyleRefresh() const {
   lv_obj_enable_style_refresh(m_obj.get());
 }
 
-void WidgetBase::setLocalStyleProp(lv_style_prop_t prop,
-                                      lv_style_value_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setLocalStyleProp(lv_style_prop_t prop, lv_style_value_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_local_style_prop(m_obj.get(), prop, value, selector);
 }
 
@@ -355,649 +367,792 @@ void WidgetBase::fadeOut(uint32_t time, uint32_t delay) const {
 }
 
 void WidgetBase::setStylePadAll(int32_t value,
-                                   lv_style_selector_t selector) const {
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_pad_all(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStylePadHor(int32_t value,
-                                   lv_style_selector_t selector) const {
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_pad_hor(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStylePadVer(int32_t value,
-                                   lv_style_selector_t selector) const {
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_pad_ver(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleMarginAll(int32_t value,
-                                      lv_style_selector_t selector) const {
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_margin_all(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleMarginHor(int32_t value,
-                                      lv_style_selector_t selector) const {
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_margin_hor(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleMarginVer(int32_t value,
-                                      lv_style_selector_t selector) const {
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_margin_ver(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStylePadGap(int32_t value,
-                                   lv_style_selector_t selector) const {
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_pad_gap(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleSize(int32_t width, int32_t height,
-                                lv_style_selector_t selector) const {
+                              lv_style_selector_t selector) const {
   lv_obj_set_style_size(m_obj.get(), width, height, selector);
 }
 
 void WidgetBase::setStyleTransformScale(int32_t value,
-                                           lv_style_selector_t selector) const {
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_transform_scale(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleWidth(int32_t value,
-                                 lv_style_selector_t selector) const {
+                               lv_style_selector_t selector) const {
   lv_obj_set_style_width(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleMinWidth(int32_t value,
-                                     lv_style_selector_t selector) const {
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_min_width(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleMaxWidth(int32_t value,
-                                     lv_style_selector_t selector) const {
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_max_width(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleHeight(int32_t value,
-                                  lv_style_selector_t selector) const {
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_height(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleMinHeight(int32_t value,
-                                      lv_style_selector_t selector) const {
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_min_height(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleMaxHeight(int32_t value,
-                                      lv_style_selector_t selector) const {
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_max_height(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleLength(int32_t value,
-                                  lv_style_selector_t selector) const {
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_length(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleX(int32_t value,
-                             lv_style_selector_t selector) const {
+void WidgetBase::setStyleX(int32_t value, lv_style_selector_t selector) const {
   lv_obj_set_style_x(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleY(int32_t value,
-                             lv_style_selector_t selector) const {
+void WidgetBase::setStyleY(int32_t value, lv_style_selector_t selector) const {
   lv_obj_set_style_y(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleAlign(lv_align_t value,
-                                 lv_style_selector_t selector) const {
+                               lv_style_selector_t selector) const {
   lv_obj_set_style_align(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleTransformWidth(int32_t value,
-                                           lv_style_selector_t selector) const {
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_transform_width(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformHeight(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformHeight(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_transform_height(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleTranslateX(int32_t value,
-                                       lv_style_selector_t selector) const {
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_translate_x(m_obj.get(), value, selector);
 }
 
 void WidgetBase::setStyleTranslateY(int32_t value,
-                                       lv_style_selector_t selector) const {
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_translate_y(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTranslateRadial(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTranslateRadial(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_translate_radial(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformScaleX(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformScaleX(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_transform_scale_x(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformScaleY(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformScaleY(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_transform_scale_y(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformRotation(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformRotation(int32_t value,
+                                           lv_style_selector_t selector) const {
   lv_obj_set_style_transform_rotation(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformPivotX(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformPivotX(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_transform_pivot_x(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformPivotY(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformPivotY(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_transform_pivot_y(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformSkewX(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformSkewX(int32_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_transform_skew_x(m_obj.get(), value, selector);
 }
 
-void WidgetBase::setStyleTransformSkewY(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransformSkewY(int32_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_transform_skew_y(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_pad_top(int32_t value,
-                                   lv_style_selector_t selector) const {
+void WidgetBase::setStylePadTop(int32_t value,
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_pad_top(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_pad_bottom(int32_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStylePadBottom(int32_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_pad_bottom(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_pad_left(int32_t value,
-                                    lv_style_selector_t selector) const {
+void WidgetBase::setStylePadLeft(int32_t value,
+                                 lv_style_selector_t selector) const {
   lv_obj_set_style_pad_left(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_pad_right(int32_t value,
-                                     lv_style_selector_t selector) const {
+void WidgetBase::setStylePadRight(int32_t value,
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_pad_right(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_pad_row(int32_t value,
-                                   lv_style_selector_t selector) const {
+void WidgetBase::setStylePadRow(int32_t value,
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_pad_row(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_pad_column(int32_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStylePadColumn(int32_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_pad_column(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_pad_radial(int32_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStylePadRadial(int32_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_pad_radial(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_margin_top(int32_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleMarginTop(int32_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_margin_top(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_margin_bottom(int32_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleMarginBottom(int32_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_margin_bottom(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_margin_left(int32_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleMarginLeft(int32_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_margin_left(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_margin_right(int32_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleMarginRight(int32_t value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_margin_right(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_color(lv_color_t value,
-                                    lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgColor(lv_color_t value,
+                                 lv_style_selector_t selector) const {
   lv_obj_set_style_bg_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_opa(lv_opa_t value,
-                                  lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgOpa(lv_opa_t value,
+                               lv_style_selector_t selector) const {
   lv_obj_set_style_bg_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_grad_color(lv_color_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgGradColor(lv_color_t value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_bg_grad_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_grad_dir(lv_grad_dir_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgGradDir(lv_grad_dir_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_bg_grad_dir(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_main_stop(int32_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgMainStop(int32_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_bg_main_stop(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_grad_stop(int32_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgGradStop(int32_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_bg_grad_stop(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_main_opa(lv_opa_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgMainOpa(lv_opa_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_bg_main_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_grad_opa(lv_opa_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgGradOpa(lv_opa_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_bg_grad_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_grad(const lv_grad_dsc_t *value,
-                                   lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgGrad(const lv_grad_dsc_t *value,
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_bg_grad(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_image_src(const void *value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgImageSrc(const void *value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_bg_image_src(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_image_opa(lv_opa_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgImageOpa(lv_opa_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_bg_image_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_image_recolor(
-    lv_color_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgImageRecolor(lv_color_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_bg_image_recolor(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_image_recolor_opa(
-    lv_opa_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgImageRecolorOpa(lv_opa_t value,
+                                           lv_style_selector_t selector) const {
   lv_obj_set_style_bg_image_recolor_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bg_image_tiled(bool value,
-                                          lv_style_selector_t selector) const {
+void WidgetBase::setStyleBgImageTiled(bool value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_bg_image_tiled(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_border_color(lv_color_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleBorderColor(lv_color_t value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_border_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_border_opa(lv_opa_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleBorderOpa(lv_opa_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_border_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_border_width(int32_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleBorderWidth(int32_t value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_border_width(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_border_side(lv_border_side_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleBorderSide(lv_border_side_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_border_side(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_border_post(bool value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleBorderPost(bool value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_border_post(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_outline_width(int32_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleOutlineWidth(int32_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_outline_width(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_outline_color(lv_color_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleOutlineColor(lv_color_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_outline_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_outline_opa(lv_opa_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleOutlineOpa(lv_opa_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_outline_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_outline_pad(int32_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleOutlinePad(int32_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_outline_pad(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_shadow_width(int32_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleShadowWidth(int32_t value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_shadow_width(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_shadow_offset_x(int32_t value,
-                                           lv_style_selector_t selector) const {
+void WidgetBase::setStyleShadowOffsetX(int32_t value,
+                                       lv_style_selector_t selector) const {
   lv_obj_set_style_shadow_offset_x(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_shadow_offset_y(int32_t value,
-                                           lv_style_selector_t selector) const {
+void WidgetBase::setStyleShadowOffsetY(int32_t value,
+                                       lv_style_selector_t selector) const {
   lv_obj_set_style_shadow_offset_y(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_shadow_spread(int32_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleShadowSpread(int32_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_shadow_spread(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_shadow_color(lv_color_t value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleShadowColor(lv_color_t value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_shadow_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_shadow_opa(lv_opa_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleShadowOpa(lv_opa_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_shadow_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_image_opa(lv_opa_t value,
-                                     lv_style_selector_t selector) const {
+void WidgetBase::setStyleImageOpa(lv_opa_t value,
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_image_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_image_recolor(lv_color_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleImageRecolor(lv_color_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_image_recolor(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_image_recolor_opa(
-    lv_opa_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleImageRecolorOpa(lv_opa_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_image_recolor_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_line_width(int32_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleLineWidth(int32_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_line_width(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_line_dash_width(int32_t value,
-                                           lv_style_selector_t selector) const {
+void WidgetBase::setStyleLineDashWidth(int32_t value,
+                                       lv_style_selector_t selector) const {
   lv_obj_set_style_line_dash_width(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_line_dash_gap(int32_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleLineDashGap(int32_t value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_line_dash_gap(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_line_rounded(bool value,
-                                        lv_style_selector_t selector) const {
+void WidgetBase::setStyleLineRounded(bool value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_line_rounded(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_line_color(lv_color_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleLineColor(lv_color_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_line_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_line_opa(lv_opa_t value,
-                                    lv_style_selector_t selector) const {
+void WidgetBase::setStyleLineOpa(lv_opa_t value,
+                                 lv_style_selector_t selector) const {
   lv_obj_set_style_line_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_arc_width(int32_t value,
-                                     lv_style_selector_t selector) const {
+void WidgetBase::setStyleArcWidth(int32_t value,
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_arc_width(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_arc_rounded(bool value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleArcRounded(bool value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_arc_rounded(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_arc_color(lv_color_t value,
-                                     lv_style_selector_t selector) const {
+void WidgetBase::setStyleArcColor(lv_color_t value,
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_arc_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_arc_opa(lv_opa_t value,
-                                   lv_style_selector_t selector) const {
+void WidgetBase::setStyleArcOpa(lv_opa_t value,
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_arc_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_arc_image_src(const void *value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleArcImageSrc(const void *value,
+                                     lv_style_selector_t selector) const {
   lv_obj_set_style_arc_image_src(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_text_color(lv_color_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleTextColor(lv_color_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_text_color(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_text_opa(lv_opa_t value,
-                                    lv_style_selector_t selector) const {
+void WidgetBase::setStyleTextOpa(lv_opa_t value,
+                                 lv_style_selector_t selector) const {
   lv_obj_set_style_text_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_text_font(const lv_font_t *value,
-                                     lv_style_selector_t selector) const {
+void WidgetBase::setStyleTextFont(const lv_font_t *value,
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_text_font(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_text_letter_space(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleTextLetterSpace(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_text_letter_space(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_text_line_space(int32_t value,
-                                           lv_style_selector_t selector) const {
+void WidgetBase::setStyleTextLineSpace(int32_t value,
+                                       lv_style_selector_t selector) const {
   lv_obj_set_style_text_line_space(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_text_decor(lv_text_decor_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleTextDecor(lv_text_decor_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_text_decor(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_text_align(lv_text_align_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleTextAlign(lv_text_align_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_text_align(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_radius(int32_t value,
-                                  lv_style_selector_t selector) const {
+void WidgetBase::setStyleRadius(int32_t value,
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_radius(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_radial_offset(int32_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleRadialOffset(int32_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_radial_offset(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_clip_corner(bool value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleClipCorner(bool value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_clip_corner(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_opa(lv_opa_t value,
-                               lv_style_selector_t selector) const {
+void WidgetBase::setStyleOpa(lv_opa_t value,
+                             lv_style_selector_t selector) const {
   lv_obj_set_style_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_opa_layered(lv_opa_t value,
-                                       lv_style_selector_t selector) const {
+void WidgetBase::setStyleOpaLayered(lv_opa_t value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_opa_layered(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_color_filter_dsc(
-    const lv_color_filter_dsc_t *value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleColorFilterDsc(const lv_color_filter_dsc_t *value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_color_filter_dsc(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_color_filter_opa(
-    lv_opa_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleColorFilterOpa(lv_opa_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_color_filter_opa(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_anim(const lv_anim_t *value,
-                                lv_style_selector_t selector) const {
+void WidgetBase::setStyleAnim(const lv_anim_t *value,
+                              lv_style_selector_t selector) const {
   lv_obj_set_style_anim(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_anim_duration(uint32_t value,
-                                         lv_style_selector_t selector) const {
+void WidgetBase::setStyleAnimDuration(uint32_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_anim_duration(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_transition(const lv_style_transition_dsc_t *value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleTransition(const lv_style_transition_dsc_t *value,
+                                    lv_style_selector_t selector) const {
   lv_obj_set_style_transition(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_blend_mode(lv_blend_mode_t value,
-                                      lv_style_selector_t selector) const {
+void WidgetBase::setStyleBlendMode(lv_blend_mode_t value,
+                                   lv_style_selector_t selector) const {
   lv_obj_set_style_blend_mode(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_layout(uint16_t value,
-                                  lv_style_selector_t selector) const {
+void WidgetBase::setStyleLayout(uint16_t value,
+                                lv_style_selector_t selector) const {
   lv_obj_set_style_layout(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_base_dir(lv_base_dir_t value,
-                                    lv_style_selector_t selector) const {
+void WidgetBase::setStyleBaseDir(lv_base_dir_t value,
+                                 lv_style_selector_t selector) const {
   lv_obj_set_style_base_dir(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_bitmap_mask_src(const void *value,
-                                           lv_style_selector_t selector) const {
+void WidgetBase::setStyleBitmapMaskSrc(const void *value,
+                                       lv_style_selector_t selector) const {
   lv_obj_set_style_bitmap_mask_src(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_rotary_sensitivity(
-    uint32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleRotarySensitivity(uint32_t value,
+                                           lv_style_selector_t selector) const {
   lv_obj_set_style_rotary_sensitivity(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_flex_flow(lv_flex_flow_t value,
-                                     lv_style_selector_t selector) const {
+void WidgetBase::setStyleFlexFlow(lv_flex_flow_t value,
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_flex_flow(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_flex_main_place(lv_flex_align_t value,
-                                           lv_style_selector_t selector) const {
+void WidgetBase::setStyleFlexMainPlace(lv_flex_align_t value,
+                                       lv_style_selector_t selector) const {
   lv_obj_set_style_flex_main_place(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_flex_cross_place(
-    lv_flex_align_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleFlexCrossPlace(lv_flex_align_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_flex_cross_place(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_flex_track_place(
-    lv_flex_align_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleFlexTrackPlace(lv_flex_align_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_flex_track_place(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_flex_grow(uint8_t value,
-                                     lv_style_selector_t selector) const {
+void WidgetBase::setStyleFlexGrow(uint8_t value,
+                                  lv_style_selector_t selector) const {
   lv_obj_set_style_flex_grow(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_column_dsc_array(
+void WidgetBase::setStyleGridColumnDscArray(
     const int32_t *value, lv_style_selector_t selector) const {
   lv_obj_set_style_grid_column_dsc_array(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_column_align(
-    lv_grid_align_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridColumnAlign(lv_grid_align_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_grid_column_align(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_row_dsc_array(
-    const int32_t *value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridRowDscArray(const int32_t *value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_grid_row_dsc_array(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_row_align(lv_grid_align_t value,
-                                          lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridRowAlign(lv_grid_align_t value,
+                                      lv_style_selector_t selector) const {
   lv_obj_set_style_grid_row_align(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_cell_column_pos(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridCellColumnPos(int32_t value,
+                                           lv_style_selector_t selector) const {
   lv_obj_set_style_grid_cell_column_pos(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_cell_x_align(
-    lv_grid_align_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridCellXAlign(lv_grid_align_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_grid_cell_x_align(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_cell_column_span(
+void WidgetBase::setStyleGridCellColumnSpan(
     int32_t value, lv_style_selector_t selector) const {
   lv_obj_set_style_grid_cell_column_span(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_cell_row_pos(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridCellRowPos(int32_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_grid_cell_row_pos(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_cell_y_align(
-    lv_grid_align_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridCellYAlign(lv_grid_align_t value,
+                                        lv_style_selector_t selector) const {
   lv_obj_set_style_grid_cell_y_align(m_obj.get(), value, selector);
 }
 
-void WidgetBase::set_style_grid_cell_row_span(
-    int32_t value, lv_style_selector_t selector) const {
+void WidgetBase::setStyleGridCellRowSpan(int32_t value,
+                                         lv_style_selector_t selector) const {
   lv_obj_set_style_grid_cell_row_span(m_obj.get(), value, selector);
 }
 
-void WidgetBase::delete_delayed(uint32_t delay_ms) const {
+void WidgetBase::deleteDelayed(uint32_t delay_ms) const {
   lv_obj_delete_delayed(m_obj.get(), delay_ms);
 }
 
-void WidgetBase::delete_async() const { lv_obj_delete_async(m_obj.get()); }
+void WidgetBase::deleteAsync() const { lv_obj_delete_async(m_obj.get()); }
 
-void WidgetBase::set_parent(lv_obj_t *parent) const {
-  lv_obj_set_parent(m_obj.get(), parent);
+void WidgetBase::setParent(const WidgetBase &parent) const {
+  lv_obj_set_parent(m_obj.get(), parent.getObj());
 }
 
-void WidgetBase::swap(lv_obj_t *obj2) const { lv_obj_swap(m_obj.get(), obj2); }
+void WidgetBase::swap(WidgetBase &obj2) const noexcept {
+  lv_obj_swap(m_obj.get(), obj2.getObj());
+}
 
-void WidgetBase::move_to_index(int32_t index) const {
+void WidgetBase::moveToIndex(int32_t index) const {
   lv_obj_move_to_index(m_obj.get(), index);
 }
+struct LocalTreeWalk_ {
+  WidgetBase *this_ = nullptr;
+  void *user_data = nullptr;
+  LvObjTreeWalkCbHandel cb_handel;
+};
 
-void WidgetBase::tree_walk(lv_obj_tree_walk_cb_t cb, void *user_data) const {
-  lv_obj_tree_walk(m_obj.get(), cb, user_data);
+lv_obj_tree_walk_res_t localTreeWalk(lv_obj_t *obj, void *local_data_ptr) {
+  if (!local_data_ptr)
+    return lv_obj_tree_walk_res_t::LV_OBJ_TREE_WALK_END;
+  auto local_data = static_cast<LocalTreeWalk_ *>(local_data_ptr);
+  if (!local_data->cb_handel)
+    return lv_obj_tree_walk_res_t::LV_OBJ_TREE_WALK_END;
+  auto local = WidgetBase::makeFromPtr(obj);
+  return local_data->cb_handel(local, local_data->user_data);
 }
 
-void WidgetBase::dump_tree() const { lv_obj_dump_tree(m_obj.get()); }
+void WidgetBase::treeWalk(const LvObjTreeWalkCbHandel &cb, void *user_data) {
+  LocalTreeWalk_ local_data{this, user_data, cb};
+  lv_obj_tree_walk(m_obj.get(), localTreeWalk, &local_data);
+}
 
-void WidgetBase::style_create_transition(
+void WidgetBase::dumpTree() const { lv_obj_dump_tree(m_obj.get()); }
+
+void WidgetBase::styleCreateTransition(
     lv_part_t part, lv_state_t prev_state, lv_state_t new_state,
     const lv_obj_style_transition_dsc_t *tr) const {
   lv_obj_style_create_transition(m_obj.get(), part, prev_state, new_state, tr);
 }
 
-void WidgetBase::update_layer_type() const {
+void WidgetBase::updateLayerType() const {
   lv_obj_update_layer_type(m_obj.get());
 }
 
-void WidgetBase::redraw(lv_layer_t *layer) const {
-  lv_obj_redraw(layer, m_obj.get());
+void WidgetBase::redraw(Layer &layer) const {
+  lv_obj_redraw(layer.getPtr(), m_obj.get());
 }
+
+bool WidgetBase::hitTest(const Point &point) const {
+  return lv_obj_hit_test(m_obj.get(), point.get());
+}
+
+WidgetBase WidgetBase::getScreen() const {
+  return makeFromPtr(lv_obj_get_screen(m_obj.get()));
+}
+
+DisplayPointer WidgetBase::getDisplay() const {
+  return DisplayPointer::makeQuote(lv_obj_get_display(m_obj.get()));
+}
+
+WidgetBase WidgetBase::getParent() {
+  return makeFromPtr(lv_obj_get_parent(m_obj.get()));
+}
+
+WidgetBase WidgetBase::getChild(int32_t idx) const {
+  return makeFromPtr(lv_obj_get_child(m_obj.get(), idx));
+}
+
+WidgetBase WidgetBase::getChildByType(int32_t idx,
+                                      const lv_obj_class_t *class_p) const {
+  return makeFromPtr(lv_obj_get_child_by_type(m_obj.get(), idx, class_p));
+}
+
+WidgetBase WidgetBase::getSibling(int32_t idx) const {
+  return makeFromPtr(lv_obj_get_sibling(m_obj.get(), idx));
+}
+
+WidgetBase WidgetBase::getSiblingByType(int32_t idx,
+                                        const lv_obj_class_t *class_p) const {
+  return makeFromPtr(lv_obj_get_sibling_by_type(m_obj.get(), idx, class_p));
+}
+
+uint32_t WidgetBase::getChildCount() const {
+  return lv_obj_get_child_count(m_obj.get());
+}
+
+uint32_t WidgetBase::getChildCountByType(const lv_obj_class_t* class_p) const {
+  return lv_obj_get_child_count_by_type(m_obj.get(), class_p);
+}
+
+int32_t WidgetBase::getIndex() const {
+  return lv_obj_get_index(m_obj.get());
+}
+
+int32_t WidgetBase::getIndexByType(const lv_obj_class_t* class_p) const {
+  return lv_obj_get_index_by_type(m_obj.get(), class_p);
+}
+
+void WidgetBase::getCoords(Area& coords) const {
+  lv_obj_get_coords(m_obj.get(), coords.getPtr());
+}
+
+int32_t WidgetBase::getX() const {
+  return lv_obj_get_x(m_obj.get());
+}
+
+int32_t WidgetBase::getX2() const {
+  return lv_obj_get_x2(m_obj.get());
+}
+
+int32_t WidgetBase::getY() const {
+  return lv_obj_get_y(m_obj.get());
+}
+
+int32_t WidgetBase::getY2() const {
+  return lv_obj_get_y2(m_obj.get());
+}
+
+int32_t WidgetBase::getXAligned() const {
+  return lv_obj_get_x_aligned(m_obj.get());
+}
+
+int32_t WidgetBase::getYAligned() const {
+  return lv_obj_get_y_aligned(m_obj.get());
+}
+
+int32_t WidgetBase::getWidth() const {
+  return lv_obj_get_width(m_obj.get());
+}
+
+int32_t WidgetBase::getHeight() const {
+  return lv_obj_get_height(m_obj.get());
+}
+
+int32_t WidgetBase::getContentWidth() const {
+  return lv_obj_get_content_width(m_obj.get());
+}
+
+int32_t WidgetBase::getContentHeight() const {
+  return lv_obj_get_content_height(m_obj.get());
+}
+
+void WidgetBase::getContentCoords(Area& area) const {
+  lv_obj_get_content_coords(m_obj.get(), area.getPtr());
+}
+
+int32_t WidgetBase::getSelfWidth() const {
+  return lv_obj_get_self_width(m_obj.get());
+}
+
+int32_t WidgetBase::getSelfHeight() const {
+  return lv_obj_get_self_height(m_obj.get());
+}
+
+const Matrix WidgetBase::getTransform() const {
+  return lv_obj_get_transform(m_obj.get());
+}
+
+void WidgetBase::getTransformedArea(Area& area, lv_obj_point_transform_flag_t flags) const {
+  lv_obj_get_transformed_area(m_obj.get(), area.getPtr(), flags);
+}
+
+void WidgetBase::invalidate() {
+  lv_obj_invalidate(m_obj.get());
+}
+
+bool WidgetBase::areaIsVisible(Area& area) const {
+  return lv_obj_area_is_visible(m_obj.get(), area.getPtr());
+}
+
+bool WidgetBase::isVisible() const {
+  return lv_obj_is_visible(m_obj.get());
+}
+
 
 } // namespace LVGLEx

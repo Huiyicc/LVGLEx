@@ -6,8 +6,12 @@
 #define OBJ_GLOBAL_H
 
 #include "lvgl.h"
+#include <functional>
+
 
 namespace LVGLEx {
+class WidgetBase;
+typedef std::function<lv_obj_tree_walk_res_t(WidgetBase &, void *)> LvObjTreeWalkCbHandel;
 
 /**
 * @brief 寻找坐标下的对象

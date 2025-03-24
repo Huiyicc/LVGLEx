@@ -5,6 +5,7 @@
 #ifndef LVGLEX_MISC_MATRIX_H
 #define LVGLEX_MISC_MATRIX_H
 
+#include <LVGLEx/obj_pointer.h>
 #include <memory>
 #include <misc/lv_matrix.h>
 
@@ -12,17 +13,24 @@ namespace LVGLEx {
 
 class Matrix {
 private:
-  lv_matrix_t m_matrix{};
+  struct MatrixPointerDeleter {
+    void operator()(lv_matrix_t *ptr) const;
+  };
+  typedef PointerPack<lv_matrix_t, MatrixPointerDeleter> MatrixPointer;
+  MatrixPointer m_matrix;
 
 public:
+
   Matrix();
   Matrix(const lv_matrix_t *matrix);
   Matrix(const lv_matrix_t &matrix);
-  Matrix(const Matrix& matrix);
+  Matrix(const Matrix &);
   ~Matrix();
 
-  const lv_matrix_t* get() const;
-  lv_matrix_t* getPtr();
+  Matrix &operator=(const Matrix &);
+
+  const lv_matrix_t *get() const;
+  lv_matrix_t *getPtr() const;
 
 
   /**
@@ -71,7 +79,7 @@ public:
    * @param m     指向另一个矩阵的指针（可选）
    * @return true: 如果矩阵是可逆的；false: 如果矩阵是奇异的，无法求逆
    */
-  bool inverse(const lv_matrix_t *m);
+  bool inverse(const lv_matrix_t *m) const;
 
   /**
    *  @brief 使用矩阵变换一个精确点
@@ -83,7 +91,7 @@ public:
    *
    */
   lv_point_precise_t
-  transformPrecisePoint(const lv_point_precise_t *point);
+  transformPrecisePoint(const lv_point_precise_t *point) const;
 
   /**
    * @brief 通过矩阵变换区域
@@ -91,7 +99,7 @@ public:
    * @param area   指向一个区域的指针
    * @return 返回变换后的区域
    */
-  lv_area_t transformArea(const lv_area_t *area);
+  lv_area_t transformArea(const lv_area_t *area) const;
 
   /**
    * @brief 检查矩阵是否为单位矩阵或平移矩阵
@@ -100,7 +108,7 @@ public:
    *
    * @return true 如果矩阵是单位矩阵或平移矩阵；否则返回 false
    */
-  bool isIdentityOrTranslation();
+  bool isIdentityOrTranslation() const;
 };
 
 } // namespace LVGLEx

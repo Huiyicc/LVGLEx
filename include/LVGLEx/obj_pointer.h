@@ -19,56 +19,66 @@ template <typename T, typename Deleter> class PointerPack {
   T *m_quote_ptr = nullptr;
 
 public:
+  // 工厂方法
   static PointerPack<T, Deleter> makeQuote(T *ptr) {
     PointerPack<T, Deleter> tmp_pointer;
     tmp_pointer.is_quote = true;
     tmp_pointer.m_quote_ptr = ptr;
     return tmp_pointer;
   }
-  static PointerPack<T, Deleter> makePrivatePtr(T *widget) {
-    PointerPack<T, Deleter> widget_pointer;
-    widget_pointer.is_quote = false;
-    widget_pointer.m_auto_ptr = std::unique_ptr<T, Deleter>(widget);
-    return widget_pointer;
+  static PointerPack<T, Deleter> makeQuote(const T *ptr) {
+    PointerPack<T, Deleter> tmp_pointer;
+    tmp_pointer.is_quote = true;
+    tmp_pointer.m_quote_ptr = (T *)ptr;
+    return tmp_pointer;
+  }
+  static PointerPack<T, Deleter> makePrivatePtr(T *ptr) {
+    PointerPack<T, Deleter> tmp_pointer;
+    tmp_pointer.is_quote = false;
+    tmp_pointer.m_auto_ptr = std::unique_ptr<T, Deleter>(ptr);
+    return tmp_pointer;
   }
 
+  // 构造/析构
   PointerPack() = default;
-  PointerPack(T *ptr) {
-    m_quote_ptr = ptr;
-    is_quote = true;
-  };
-  PointerPack(const PointerPack &ptr) {
-    if (ptr.is_quote) {
-      m_quote_ptr = ptr.m_quote_ptr;
-    } else {
-      m_quote_ptr = ptr.get();
-    }
-    is_quote = true;
-  };
-  virtual ~PointerPack() = default;
+  explicit PointerPack(T *ptr) : is_quote(true), m_quote_ptr(ptr) {}
+  ~PointerPack() = default;
 
-  T *operator->() {
-    if (is_quote) {
-      return m_quote_ptr;
-    } else {
-      return m_auto_ptr.get();
+  // 禁用拷贝
+  PointerPack(const PointerPack &) = delete;
+  PointerPack &operator=(const PointerPack &) = delete;
+
+  // 移动语义
+  PointerPack(PointerPack &&other) noexcept { *this = std::move(other); }
+
+  PointerPack &operator=(PointerPack &&other) noexcept {
+    if (this != &other) {
+      // 清理当前资源
+      if (!is_quote)
+        m_auto_ptr.reset();
+      else
+        m_quote_ptr = nullptr;
+
+      // 转移资源
+      is_quote = other.is_quote;
+      if (is_quote) {
+        m_quote_ptr = other.m_quote_ptr;
+        other.m_quote_ptr = nullptr;
+      } else {
+        m_auto_ptr = std::move(other.m_auto_ptr);
+        other.is_quote = true; // 原对象转为空引用
+        other.m_quote_ptr = nullptr;
+      }
     }
-  }
-  T &operator*() {
-    if (is_quote) {
-      return *m_quote_ptr;
-    } else {
-      return *m_auto_ptr;
-    }
+    return *this;
   }
 
-  T *get() const {
-    if (is_quote) {
-      return m_quote_ptr;
-    } else {
-      return m_auto_ptr.get();
-    }
-  }
+  // 指针操作
+  explicit operator bool() const noexcept { return get() != nullptr; }
+  explicit operator T *() const noexcept { return get(); }
+  T *get() const noexcept { return is_quote ? m_quote_ptr : m_auto_ptr.get(); }
+  T *operator->() const noexcept { return get(); }
+  T &operator*() const { return *get(); }
 
   bool operator==(const PointerPack<T, Deleter> &other) {
     if (is_quote && other.is_quote) {
@@ -80,55 +90,49 @@ public:
     }
   }
 
-  explicit operator bool() const {
+  // 所有权管理
+  bool isOwning() const noexcept { return !is_quote; }
+
+  T *release() noexcept {
     if (is_quote) {
-      return m_quote_ptr != nullptr;
+      T *p = m_quote_ptr;
+      m_quote_ptr = nullptr;
+      return p;
+    }
+    return m_auto_ptr.release();
+  }
+
+  void reset(T *ptr = nullptr) {
+    if (is_quote) {
+      m_quote_ptr = ptr;
     } else {
-      return m_auto_ptr != nullptr;
+      m_auto_ptr.reset(ptr);
     }
   }
 
-  explicit operator T *() const {
-    if (is_quote) {
-      return m_quote_ptr;
-    } else {
-      return m_auto_ptr.get();
-    }
+  void swap(PointerPack &other) noexcept {
+    std::swap(is_quote, other.is_quote);
+    std::swap(m_auto_ptr, other.m_auto_ptr);
+    std::swap(m_quote_ptr, other.m_quote_ptr);
   }
 
-  PointerPack &operator=(T *other) = delete;
-  PointerPack &operator=(PointerPack &&other) noexcept {
-    is_quote = other.is_quote;
-    if (is_quote) {
-      m_quote_ptr = other.m_quote_ptr;
-    } else {
-      m_auto_ptr = std::move(other.m_auto_ptr);
-      // m_deleter = std::move(other.m_deleter);
-    }
-    return *this;
-  };
-  // PointerPack& operator=(T* other) {
-  //   if (is_quote) {
-  //     m_quote_ptr = other;
-  //   } else {
-  //     m_shared_ptr = std::shared_ptr<T>(other, other->m_deleter);
-  //   }
-  //   return *this;
-  // }
+  // 比较操作
+  bool operator==(const PointerPack &other) const noexcept {
+    return get() == other.get();
+  }
+
+  bool operator!=(const PointerPack &other) const noexcept {
+    return !(*this == other);
+  }
+
+  bool operator==(std::nullptr_t) const noexcept { return get() == nullptr; }
+  bool operator!=(std::nullptr_t) const noexcept { return get() != nullptr; }
 
   void clean() {
     if (is_quote) {
       m_quote_ptr = nullptr;
     } else {
       m_auto_ptr.reset();
-    }
-  }
-
-  T *release() {
-    if (is_quote) {
-      return m_quote_ptr;
-    } else {
-      return m_auto_ptr.release();
     }
   }
 };
@@ -149,8 +153,17 @@ struct DisplayPointerDeleter {
   }
 };
 
+struct LayerPointerDeleter {
+  void operator()(lv_layer_t *ptr) const {
+    if (ptr) {
+      delete ptr;
+    }
+  }
+};
+
 typedef PointerPack<lv_obj_t, WidgetPointerDeleter> WidgetPointer;
 typedef PointerPack<lv_display_t, DisplayPointerDeleter> DisplayPointer;
+typedef PointerPack<lv_layer_t, LayerPointerDeleter> LayerPointer;
 
 } // namespace LVGLEx
 
