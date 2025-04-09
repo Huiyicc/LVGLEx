@@ -5,7 +5,7 @@
 #ifndef LVGLEX_DRAW_LAYER_H
 #define LVGLEX_DRAW_LAYER_H
 
-#include "../obj_pointer.h"
+#include <LVGLEx/object/obj_pointer.h>
 
 namespace LVGLEx {
 class Area;

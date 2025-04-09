@@ -5,10 +5,11 @@
 #ifndef LVGLEX_WIDGET_BASE_H
 #define LVGLEX_WIDGET_BASE_H
 
-#include "../obj_pointer.h"
 #include "./widget_event_base.h"
-#include <LVGLEx/obj_global.h>
+#include <LVGLEx/object/obj_global.h>
+#include <LVGLEx/object/obj_pointer.h>
 #include <lvgl.h>
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -21,20 +22,6 @@ class Matrix;
 class Point;
 class Area;
 class Style;
-
-/*
-void func_name_end(int32_t size) const;
-void func_name_end(lv_cover_res_t res) const;
-void delete() const;
-void clean() const;
-lv_refr_now(lv_display_t* disp) -> void
-lv_refr_init(void) -> void
-lv_refr_deinit(void)->void
-lv_inv_area(lv_display_t* disp, const lv_area_t* area_p) -> void
-lv_refr_set_disp_refreshing(lv_display_t* disp) -> void
-lv_display_refr_timer(lv_timer_t* timer) -> void
-void lv_obj_delete_anim_completed_cb(lv_anim_t *a) const;
-* */
 
 #define WIDGET_OBJ_CREATE_H(TYPE)                                              \
   static TYPE create(WidgetBase *parent) noexcept;                             \
@@ -51,8 +38,7 @@ void lv_obj_delete_anim_completed_cb(lv_anim_t *a) const;
   }                                                                            \
   TYPE TYPE::create(WidgetBase *parent) noexcept {                             \
     TYPE r;                                                                    \
-    auto scr = parent->getScreenActive();                                      \
-    r.m_obj = WidgetPointer::makeQuote(OBJCREATE_FUNC(scr.get()));             \
+    r.m_obj = WidgetPointer::makeQuote(OBJCREATE_FUNC(parent->getObj()));      \
     r.init();                                                                  \
     return r;                                                                  \
   };                                                                           \
@@ -61,8 +47,35 @@ void lv_obj_delete_anim_completed_cb(lv_anim_t *a) const;
     m_obj = std::move(other.m_obj);                                            \
     return *this;                                                              \
   }
+
+class WidgetEvent {
+  lv_event_t *m_event = nullptr;
+  friend class WidgetBase;
+  WidgetEvent(lv_event_t *e);
+
+public:
+  lv_event_t* operator->() const {
+    return m_event;
+  }
+  void* userData() const;
+};
+
+typedef std::function<void(WidgetEvent &)> EventCallBackFunc;
+
+class WidgetEventDsc {
+private:
+  lv_event_dsc_t *m_dsc = nullptr;
+  void *m_data_ptr;
+  EventCallBackFunc m_func;
+  friend class WidgetBase;
+
+public:
+  WidgetEventDsc();
+};
+
 class WidgetBase : public WidgetEventBase {
 private:
+std::map<int,std::shared_ptr<WidgetEventDsc>> m_event_dsc;
 protected:
   WidgetPointer m_obj;
   // lv_obj_t *m_obj = nullptr;
@@ -72,6 +85,7 @@ protected:
   virtual void init() final;
 
 public:
+
   WidgetBase();
   ~WidgetBase() override;
 
@@ -86,6 +100,14 @@ public:
   [[nodiscard]] WindowBase *getWindow() const;
   [[nodiscard]] WidgetPointer getScreenActive() const;
   virtual WidgetPointer release() final;
+
+  int addEvent(lv_event_code_t filter,
+           const EventCallBackFunc &func,
+           void *user_data);
+  int addEvent(const EventCallBackFunc &func,
+           void *user_data);
+
+  void removeEvent(int event_id);
 
   /**
    * @brief 以相对坐标的方式设置对象的相对位置
@@ -1916,7 +1938,8 @@ public:
    * @param area 指向存储变换后区域的 `Area` 对象。
    * @param flags 变换标志，参见 `lv_obj_point_transform_flag_t`。
    */
-  void getTransformedArea(Area &area, lv_obj_point_transform_flag_t flags) const;
+  void getTransformedArea(Area &area,
+                          lv_obj_point_transform_flag_t flags) const;
 
   /**
    * @brief 使对象的区域失效，从而触发重绘。
@@ -1937,8 +1960,9 @@ public:
    * @return 如果对象可见则返回 `true`，否则返回 `false`。
    */
   bool isVisible() const;
-
 };
+
+
 
 } // namespace LVGLEx
 

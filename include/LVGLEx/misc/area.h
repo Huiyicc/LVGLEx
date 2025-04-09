@@ -4,7 +4,7 @@
 
 #ifndef LVGLEX_MISC_AREA_H
 #define LVGLEX_MISC_AREA_H
-#include <LVGLEx/obj_pointer.h>
+#include <LVGLEx/object/obj_pointer.h>
 #include <cstdint>
 #include <misc/lv_area.h>
 

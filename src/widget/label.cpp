@@ -2,7 +2,7 @@
 // Created by 19254 on 24-12-16.
 //
 #include <LVGLEx/widget/label.h>
-#include <LVGLEx/window.h>
+#include <LVGLEx/container/window.h>
 #include <iostream>
 #include <misc/lv_event_private.h>
 #include <widgets/label/lv_label.h>

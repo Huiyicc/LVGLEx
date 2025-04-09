@@ -1,13 +1,13 @@
 //
 // Created by 19254 on 24-12-16.
 //
-#include <LVGLEx/draw/layer.h>
+#include <LVGLEx/container/layer.h>
+#include <LVGLEx/container/window.h>
 #include <LVGLEx/misc/area.h>
 #include <LVGLEx/misc/matrix.h>
 #include <LVGLEx/misc/point.h>
 #include <LVGLEx/misc/style.h>
-#include <LVGLEx/widget/widget_base.h>
-#include <LVGLEx/window.h>
+#include <LVGLEx/object/widget_base.h>
 #include <core/lv_obj_pos.h>
 #include <core/lv_obj_style_private.h>
 #include <core/lv_obj_tree.h>
@@ -64,6 +64,55 @@ WidgetPointer WidgetBase::getScreenActive() const {
 
 void WidgetBase::setPos(const int32_t x, const int32_t y) const {
   lv_obj_set_pos(m_obj.get(), x, y);
+}
+
+int WidgetBase::addEvent(lv_event_code_t filter,
+                         const EventCallBackFunc &func,
+                         void *user_data) {
+  auto l = std::make_shared<WidgetEventDsc>();
+  l->m_data_ptr = user_data;
+  if (func) {
+    l->m_func = func;
+    l->m_dsc = lv_obj_add_event_cb(
+        m_obj.get(),
+        [](lv_event_t *e) {
+          WidgetEvent event(e);
+          static_cast<WidgetEventDsc *>(e->user_data)->m_func(event);
+        },
+        filter, l.get());
+  }
+  int id = m_event_dsc.empty() ? 0 : int(m_event_dsc.begin()->first) + 1;
+  m_event_dsc[id] = l;
+  return id;
+}
+
+int WidgetBase::addEvent(const EventCallBackFunc &func,
+                         void *user_data) {
+  auto l = std::make_shared<WidgetEventDsc>();
+  l->m_data_ptr = user_data;
+  if (func) {
+    l->m_func = func;
+    l->m_dsc = lv_obj_add_event_cb(
+        m_obj.get(),
+        [](lv_event_t *e) {
+          WidgetEvent event(e);
+          static_cast<WidgetEventDsc *>(e->user_data)->m_func(event);
+        },
+        LV_EVENT_ALL, l.get());
+  }
+  int id = m_event_dsc.empty() ? 0 : int(m_event_dsc.begin()->first) + 1;
+  m_event_dsc[id] = l;
+  return id;
+}
+
+void WidgetBase::removeEvent(int evebt_id) {
+  auto iter = m_event_dsc.find(evebt_id);
+  if (iter != m_event_dsc.end()) {
+    auto dsc = iter->second;
+    lv_obj_remove_event_dsc(m_obj.get(), dsc->m_dsc);
+    dsc->m_dsc = nullptr;
+    m_event_dsc.erase(evebt_id);
+  }
 }
 
 void WidgetBase::setX(const int32_t x) const { lv_obj_set_x(m_obj.get(), x); }
@@ -1066,37 +1115,27 @@ uint32_t WidgetBase::getChildCount() const {
   return lv_obj_get_child_count(m_obj.get());
 }
 
-uint32_t WidgetBase::getChildCountByType(const lv_obj_class_t* class_p) const {
+uint32_t WidgetBase::getChildCountByType(const lv_obj_class_t *class_p) const {
   return lv_obj_get_child_count_by_type(m_obj.get(), class_p);
 }
 
-int32_t WidgetBase::getIndex() const {
-  return lv_obj_get_index(m_obj.get());
-}
+int32_t WidgetBase::getIndex() const { return lv_obj_get_index(m_obj.get()); }
 
-int32_t WidgetBase::getIndexByType(const lv_obj_class_t* class_p) const {
+int32_t WidgetBase::getIndexByType(const lv_obj_class_t *class_p) const {
   return lv_obj_get_index_by_type(m_obj.get(), class_p);
 }
 
-void WidgetBase::getCoords(Area& coords) const {
+void WidgetBase::getCoords(Area &coords) const {
   lv_obj_get_coords(m_obj.get(), coords.getPtr());
 }
 
-int32_t WidgetBase::getX() const {
-  return lv_obj_get_x(m_obj.get());
-}
+int32_t WidgetBase::getX() const { return lv_obj_get_x(m_obj.get()); }
 
-int32_t WidgetBase::getX2() const {
-  return lv_obj_get_x2(m_obj.get());
-}
+int32_t WidgetBase::getX2() const { return lv_obj_get_x2(m_obj.get()); }
 
-int32_t WidgetBase::getY() const {
-  return lv_obj_get_y(m_obj.get());
-}
+int32_t WidgetBase::getY() const { return lv_obj_get_y(m_obj.get()); }
 
-int32_t WidgetBase::getY2() const {
-  return lv_obj_get_y2(m_obj.get());
-}
+int32_t WidgetBase::getY2() const { return lv_obj_get_y2(m_obj.get()); }
 
 int32_t WidgetBase::getXAligned() const {
   return lv_obj_get_x_aligned(m_obj.get());
@@ -1106,13 +1145,9 @@ int32_t WidgetBase::getYAligned() const {
   return lv_obj_get_y_aligned(m_obj.get());
 }
 
-int32_t WidgetBase::getWidth() const {
-  return lv_obj_get_width(m_obj.get());
-}
+int32_t WidgetBase::getWidth() const { return lv_obj_get_width(m_obj.get()); }
 
-int32_t WidgetBase::getHeight() const {
-  return lv_obj_get_height(m_obj.get());
-}
+int32_t WidgetBase::getHeight() const { return lv_obj_get_height(m_obj.get()); }
 
 int32_t WidgetBase::getContentWidth() const {
   return lv_obj_get_content_width(m_obj.get());
@@ -1122,7 +1157,7 @@ int32_t WidgetBase::getContentHeight() const {
   return lv_obj_get_content_height(m_obj.get());
 }
 
-void WidgetBase::getContentCoords(Area& area) const {
+void WidgetBase::getContentCoords(Area &area) const {
   lv_obj_get_content_coords(m_obj.get(), area.getPtr());
 }
 
@@ -1138,21 +1173,17 @@ const Matrix WidgetBase::getTransform() const {
   return lv_obj_get_transform(m_obj.get());
 }
 
-void WidgetBase::getTransformedArea(Area& area, lv_obj_point_transform_flag_t flags) const {
+void WidgetBase::getTransformedArea(Area &area,
+                                    lv_obj_point_transform_flag_t flags) const {
   lv_obj_get_transformed_area(m_obj.get(), area.getPtr(), flags);
 }
 
-void WidgetBase::invalidate() {
-  lv_obj_invalidate(m_obj.get());
-}
+void WidgetBase::invalidate() { lv_obj_invalidate(m_obj.get()); }
 
-bool WidgetBase::areaIsVisible(Area& area) const {
+bool WidgetBase::areaIsVisible(Area &area) const {
   return lv_obj_area_is_visible(m_obj.get(), area.getPtr());
 }
 
-bool WidgetBase::isVisible() const {
-  return lv_obj_is_visible(m_obj.get());
-}
-
+bool WidgetBase::isVisible() const { return lv_obj_is_visible(m_obj.get()); }
 
 } // namespace LVGLEx

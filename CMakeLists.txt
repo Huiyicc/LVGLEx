@@ -10,7 +10,7 @@ set(LVGL_CFG_TEMPLATE_HEADER ${CMAKE_CURRENT_LIST_DIR}/privately/lv_conf_templat
 include(cmake/base.cmake)
 include(cmake/SDL.cmake)
 include(cmake/freetype2.cmake)
-include(cmake/lvgl.cmake)
+include(cmake/lvgl_pc.cmake)
 include(cmake/fmt.cmake)
 
 file(GLOB_RECURSE LVGLEX_RESOURCES

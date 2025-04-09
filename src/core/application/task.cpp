@@ -4,8 +4,9 @@
 #include "global_def.h"
 #include "lvgl.h"
 
-#include <LVGLEx/application.h>
+#include <LVGLEx/core/application.h>
 #include <iostream>
+#include <thread>
 
 namespace LVGLEx {
 
@@ -16,7 +17,8 @@ void runExec() {
   };
   while (g_LVGLEx_initd && check_display_num()) {
     uint32_t time_till_next = lv_timer_handler();
-    lv_delay_ms(time_till_next);
+    // lv_delay_ms(time_till_next);
+    std::this_thread::sleep_for(std::chrono::milliseconds(time_till_next));
   }
 }
 

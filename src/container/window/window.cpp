@@ -49,14 +49,15 @@ Window::Window() {
   auto dsc =
       static_cast<lv_sdl_window_t *>(lv_display_get_driver_data(m_display));
 
-  SDL_HideWindow(dsc->window);
+  // SDL_HideWindow(dsc->window);
   register_event();
 
   // 注册常量
   SDL_SetWindowData(dsc->window, WINDOW_DATAMAP_NAME_TITLEBAR_HEIGHT,
                     &this->m_titleBarHeight);
-
+  initHal();
   hook_windows(this);
+
   SDL_SetWindowData(dsc->window, "LVGLExWindow", this);
   g_window_map[m_display] = this;
 }
@@ -79,7 +80,6 @@ void Window::register_event() {
       LV_EVENT_SCREEN_LOADED, this);
   lv_display_add_event_cb(
       m_display, [](lv_event_t *e) {}, LV_EVENT_CLICKED, this);
-  lv_sdl_window_set_event_callback(handel_sdl_window_event);
 };
 
 void Window::show() {

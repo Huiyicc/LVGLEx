@@ -3,7 +3,7 @@
 //
 
 #include "./window_private_def.h"
-#include "LVGLEx/window.h"
+#include "LVGLEx/container/window.h"
 #include "global_def.h"
 
 #ifdef _HOST_WINDOWS_
@@ -130,14 +130,13 @@ LRESULT CALLBACK SDLWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       return HTBOTTOM;
     }
 
-    // 其他区域交由默认处理
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return OriginalWindowProc(hwnd, msg, wParam, lParam);
   }
 
   default:
     return OriginalWindowProc(hwnd, msg, wParam, lParam);
   }
-  return 0;
+  return OriginalWindowProc(hwnd, msg, wParam, lParam);
 }
 
 lv_display_t *create_window(int width, int height) {
@@ -165,7 +164,6 @@ lv_display_t *create_window(int width, int height) {
   SDL_VERSION(&wmInfo.version);
   SDL_GetWindowWMInfo(dsc->window, &wmInfo);
   register_window_id(wmInfo.info.win.window, SDL_GetWindowID(dsc->window));
-  SDL_HideWindow(dsc->window);
 
   return resultWin;
 }
@@ -183,7 +181,7 @@ void hook_windows(Window *window) {
 
   auto OriginalWindowProc =
       (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)SDLWndProc);
-  // PrintDebug("old:{}",(intptr_t)OriginalWindowProc);
+
   SDL_SetWindowData(dsc->window, "SDLExOriginalWindowProc", OriginalWindowProc);
 
   // ws_pop,这步主要是为了显示任务栏图标

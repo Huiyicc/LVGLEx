@@ -1,10 +1,10 @@
 //
 // Created by 19254 on 24-12-22.
 //
-#include <LVGLEx/widget/widget_base.h>
-#include <LVGLEx/widget/widget_event_base.h>
-#include <misc/lv_event_private.h>
-#include <misc/lv_types.h>
+#include <../../third_party/lvgl/src/misc/lv_event_private.h>
+#include <../../third_party/lvgl/src/misc/lv_types.h>
+#include <LVGLEx/object/widget_base.h>
+#include <LVGLEx/object/widget_event_base.h>
 
 // #define WIDGET_OBJ_EVENT_REGISTER(TARGET, TYPE, HANDEL, EVENT)                 \
 //   lv_obj_add_event_cb(                                                         \

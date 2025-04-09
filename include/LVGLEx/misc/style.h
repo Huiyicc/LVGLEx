@@ -7,7 +7,7 @@
 
 #include "misc/lv_style.h"
 
-#include <LVGLEx/obj_pointer.h>
+#include <LVGLEx/object/obj_pointer.h>
 
 namespace LVGLEx {
 

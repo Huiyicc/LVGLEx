@@ -3,7 +3,7 @@
 //
 #include "window_hook.h"
 
-#include <LVGLEx/obj_global.h>
+#include <LVGLEx/object/obj_global.h>
 #include <iostream>
 #include <map>
 
@@ -20,6 +20,20 @@ void register_window_id(void *handel, uint32_t id) {
 }
 
 uint32_t get_window_id(void *handel) { return window_handel_id_map[handel]; }
+
+void WindowBase::initHal() {
+  auto disp = m_display;
+  // 注册鼠标事件
+  lv_indev_t *mouse = lv_sdl_mouse_create();
+  lv_indev_set_display(mouse, disp);
+  lv_display_set_default(disp);
+  // 注册鼠标滚轮事件
+  lv_indev_t *mousewheel = lv_sdl_mousewheel_create();
+  lv_indev_set_display(mousewheel, disp);
+  // 注册键盘事件
+  lv_indev_t *kb = lv_sdl_keyboard_create();
+  lv_indev_set_display(kb, disp);
+}
 
 void handel_sdl_window_event(void *eventPtr) {
   auto event = static_cast<SDL_Event *>(eventPtr);
@@ -47,8 +61,8 @@ void WindowBase::handelFirstRender(void *eventPtr) {
     return;
   }
   auto currSDLWindow = SDL_GetWindowFromID(event->window.windowID);
-  if (event->window.type ==SDL_WINDOWEVENT_EXPOSED) {
-       PrintDebug("WindowBase::handelFirstRender");
+  if (event->window.type == SDL_WINDOWEVENT_EXPOSED) {
+    PrintDebug("WindowBase::handelFirstRender");
   }
   // 后渲染,解决窗口第一次显示渲染的问题
   if (!m_firstRender) {

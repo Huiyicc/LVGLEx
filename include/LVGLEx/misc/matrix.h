@@ -5,7 +5,7 @@
 #ifndef LVGLEX_MISC_MATRIX_H
 #define LVGLEX_MISC_MATRIX_H
 
-#include <LVGLEx/obj_pointer.h>
+#include <LVGLEx/object/obj_pointer.h>
 #include <memory>
 #include <misc/lv_matrix.h>
 

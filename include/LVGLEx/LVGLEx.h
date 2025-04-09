@@ -8,8 +8,12 @@
 #ifdef LVGLEX_IS_MODEL
 #include "../../privately/global_def.h"
 #endif
-#include "./application.h"
-#include "./font.h"
-#include "./window.h"
+#include <LVGLEx/core/application.h>
+#include <LVGLEx/resouurce/font.h>
+#include <LVGLEx/container/window.h>
+
+#include <LVGLEx/widget/label.h>
+#include <LVGLEx/widget/button.h>
+
 
 #endif //LVGLEX_H

@@ -6,7 +6,7 @@
 #define LVGLEX_WINDOW_H
 
 #include "misc/lv_types.h"
-#include "widget/widget_base.h"
+#include <LVGLEx/object/widget_base.h>
 #include <memory>
 #include <set>
 #include <string>
@@ -37,6 +37,7 @@ protected:
   // 标题栏高度
   int m_titleBarHeight = 16;
 
+  void initHal();
   void handelEvent(void *eventPtr);
   void handelMouseEvent(void *eventPtr);
   void handelWindowMoveEvent(void *eventPtr);

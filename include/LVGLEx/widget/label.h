@@ -5,7 +5,7 @@
 #ifndef LVGLEX_WIDGET_LABEL_H
 #define LVGLEX_WIDGET_LABEL_H
 
-#include "widget_base.h"
+#include <LVGLEx/object/widget_base.h>
 #include <memory>
 #include <string>
 

@@ -1,7 +1,7 @@
 //
 // Created by 19254 on 25-1-12.
 //
-#include "LVGLEx/obj_global.h"
+#include <LVGLEx/object/obj_global.h>
 
 
 namespace LVGLEx {

@@ -1,9 +1,9 @@
 //
 // Created by 19254 on 25-3-20.
 //
-#include <LVGLEx/draw/layer.h>
-#include <LVGLEx/misc/area.h>
-#include <draw/lv_draw.h>
+#include <../../include/LVGLEx/misc/area.h>
+#include <../../third_party/lvgl/src/draw/lv_draw.h>
+#include <LVGLEx/container/layer.h>
 
 namespace LVGLEx {
 
